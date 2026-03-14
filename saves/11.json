@@ -1,0 +1,48 @@
+{
+    "player": {
+        "name": "11",
+        "stats": {
+            "근골": 10,
+            "심법": 13,
+            "외공": 15,
+            "경공": 10,
+            "자질": 15,
+            "행운": 10
+        },
+        "hp": 100,
+        "gold": 0,
+        "xp": 0,
+        "total_xp": 0,
+        "enlightenment_idx": 0,
+        "win_streak": 0,
+        "inn_buff": null,
+        "daily_trained": false,
+        "deck": [
+            {
+                "name": "복호장",
+                "mastery": 1
+            },
+            {
+                "name": "유운지",
+                "mastery": 1
+            },
+            {
+                "name": "삼재공",
+                "mastery": 1
+            },
+            {
+                "name": "육합권",
+                "mastery": 1
+            },
+            {
+                "name": "포천삼",
+                "mastery": 1
+            }
+        ]
+    },
+    "chapter": 1,
+    "encounter": 1,
+    "run_history": [
+        "11, 죽음을 넘어 다시 강호에 서다."
+    ]
+}
