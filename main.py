@@ -233,12 +233,21 @@ class GuunrokGame:
         self.victory_overlay = False
         # 준비된 카드 보상이 있으면 먼저 CARD_REWARD 화면으로
         # 보스 처치인데 보상이 아직 준비 안 됐다면 지금 준비
-        if (
-            not self.card_reward_choices
-            and self.last_battle_rewards
-            and self.last_battle_rewards.get("is_boss")
-        ):
-            self._prepare_boss_card_reward()
+        if not self.card_reward_choices:
+            # 1차: last_battle_rewards 기준
+            is_boss_battle = bool(
+                self.last_battle_rewards and self.last_battle_rewards.get("is_boss")
+            )
+            # 2차 안전망: node 컨텍스트 기준 (process_victory가 is_boss를 오탐한 경우 복구)
+            if not is_boss_battle and self.current_node_graph and self._visiting_node_id >= 0:
+                _node = next(
+                    (n for n in self.current_node_graph if n.id == self._visiting_node_id),
+                    None,
+                )
+                if _node and _node.is_boss:
+                    is_boss_battle = True
+            if is_boss_battle:
+                self._prepare_boss_card_reward()
         if self.card_reward_choices:
             self.phase = Phase.CARD_REWARD
             return
@@ -267,6 +276,10 @@ class GuunrokGame:
             from world.faction_data import build_enemy_for_node
 
             self.enemy = build_enemy_for_node(node, ENEMY_REGISTRY)
+            # [보완] node.is_boss 플래그를 enemy 객체에 전파
+            # (generic enemy 클래스는 __init__에 is_boss가 없어 process_victory가 오탐할 수 있음)
+            if node.is_boss:
+                self.enemy.is_boss = True
             self.battle_mgr = BattleManager(self.player, self.enemy, self)
             self.player.start_battle(CARD_REGISTRY)
             self.new_hap()
@@ -583,6 +596,26 @@ class GuunrokGame:
         """[신규] 남은 모든 격돌을 즉시 계산하고 결과를 로그에 새깁니다."""
         anim = self.clash_anim
         start_idx = anim["clash_idx"]
+        stage = anim.get("stage", "")
+
+        # [보완] 이중 대미지 방지:
+        # RESULT_TYPING_INIT / RESULT_TYPING / WAIT_AFTER_ROUND 단계에서 호출되면
+        # 해당 합의 판정은 이미 끝난 것이므로, pending_state를 적용하고 건너뜀.
+        # (WAIT_BEFORE_RESOLVE는 아직 resolve_single_clash를 실행하지 않은 상태라 해당 없음)
+        _already_resolved_stages = ("RESULT_TYPING_INIT", "RESULT_TYPING", "WAIT_AFTER_ROUND")
+        already_resolved = stage in _already_resolved_stages
+        if already_resolved:
+            pending = anim.get("pending_state")
+            if pending and not anim.get("damage_applied", False):
+                self.player.hp = pending["p_hp"]
+                self.player.defense = pending["p_def"]
+                self.player.energy = pending["p_energy"]
+                self.player.max_energy = pending["p_max_energy"]
+                self.player.temp_max_energy_bonus = pending["p_temp_bonus"]
+                self.enemy.hp = pending["e_hp"]
+                self.enemy.defense = pending["e_def"]
+                self.enemy.atk = pending["e_atk"]
+            start_idx += 1  # 이 합은 이미 처리됨 — 다음 합부터 재계산
 
         # 1. 현재 남은 합부터 마지막 5합까지 루프로 즉시 처리
         for idx in range(start_idx, 5):
@@ -595,11 +628,16 @@ class GuunrokGame:
             enemy_intent = self.enemy.intent_queue[idx]
 
             # 에너지 소모 처리 (아직 소모되지 않은 합들만)
-            # 현재 진행 중이던 합이 HEADER_INIT 이전이었다면 에너지 소모
-            if idx > start_idx and player_card:
-                self.player.energy -= player_card.base_cost
-            elif idx == start_idx and anim["stage"] == "HEADER_INIT" and player_card:
-                self.player.energy -= player_card.base_cost
+            if already_resolved:
+                # start_idx가 이미 증가됐으므로 이 루프의 모든 합은 미처리 상태
+                if player_card:
+                    self.player.energy -= player_card.base_cost
+            else:
+                # 기존 로직: 진행 중이던 합이 HEADER_INIT 이전이었다면 에너지 소모
+                if idx > start_idx and player_card:
+                    self.player.energy -= player_card.base_cost
+                elif idx == start_idx and stage == "HEADER_INIT" and player_card:
+                    self.player.energy -= player_card.base_cost
 
             # 실제 대미지 및 효과 계산 실행 (BattleManager 호출)
             results = self.battle_mgr.resolve_single_clash(player_card, enemy_intent)
@@ -1820,6 +1858,7 @@ class GuunrokGame:
 
         status_txt = (
             f"금자: {self.player.gold} | 기혈: {self.player.hp}/{self.player.max_hp}"
+            f" | 누적 공력: {self.player.total_xp}"
         )
         if self.player.inn_buff:
             status_txt += f" | 식사 효과: {self.player.inn_buff['name']}"
@@ -1989,11 +2028,12 @@ class GuunrokGame:
         if can_train:
             bg_col = (50, 40, 80)
             border_col = (150, 100, 255)
-            t_msg = f"✨ 심득(心得): 경지를 돌파하다 (공력 {next_goal} 달성)"
+            # 누적 공력을 함께 표시 — 유저가 왜 활성화됐는지 확인 가능하게
+            t_msg = f"✨ 심득(心得): 경지를 돌파하다 (누적 공력 {self.player.total_xp} / {next_goal})"
         else:
             bg_col = (30, 30, 30)
             border_col = COLOR_GRAY
-            t_msg = f"🔒 다음 깨달음까지 정진하십시오. ({self.player.total_xp} / {next_goal})"
+            t_msg = f"🔒 다음 깨달음까지 정진하십시오. (누적 공력 {self.player.total_xp} / {next_goal})"
 
         pygame.draw.rect(surf, bg_col, r_train, border_radius=10)
         pygame.draw.rect(surf, border_col, r_train, 2, border_radius=10)
@@ -2302,41 +2342,56 @@ class GuunrokGame:
                 )
 
     def render_world_to(self, surf):
-        surf.blit(self.font_name.render("강호 대지", True, COLOR_WHITE), (530, 80))
-        configs = [
-            ("북쪽 출도", 100, COLOR_RED, lambda: self._enter_region("north")),
-            ("객잔", 350, COLOR_GREEN, lambda: setattr(self, "phase", Phase.INN)),
-            ("연무장", 600, COLOR_BLUE, lambda: setattr(self, "phase", Phase.TRAINING)),
-            ("비급고", 850, (80, 60, 130), lambda: setattr(self, "phase", Phase.DECK)),
-            # [신규] 월드맵 화면 우측 하단에 '저장' 버튼 추가
-            ("기록 저장", 1000, COLOR_GOLD, self.save_current_game),
-        ]
-        for txt, x, col, cmd in configs:
-            r = pygame.Rect(
-                x,
-                200 if txt != "기록 저장" else 600,
-                200,
-                100 if txt != "기록 저장" else 60,
-            )
-            self.ui_buttons_next[f"world_{txt}"] = {
-                "rect": r,
-                "enabled": True,
-                "on_click": cmd,
-            }
-            pygame.draw.rect(surf, col, r, border_radius=10)
-            surf.blit(
-                self.font.render(txt, True, COLOR_WHITE),
-                (r.x + 40, r.y + 35 if txt != "기록 저장" else r.y + 20),
-            )
+        # [UI 개선] 제목 중앙 정렬
+        title = self.font_name.render("강호 대지", True, COLOR_WHITE)
+        surf.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 60))
 
-        surf.blit(
-            self.font.render(
-                f"금자: {self.player.gold} | XP: {self.player.xp} | HP: {self.player.hp}/{self.player.max_hp}",
-                True,
-                COLOR_GOLD,
-            ),
-            (100, 100),
-        )
+        # [UI 개선] 구분선
+        pygame.draw.line(surf, COLOR_GRAY, (100, 110), (SCREEN_WIDTH - 100, 110), 1)
+
+        # [UI 개선] 스탯 바 중앙 정렬
+        stat_txt = f"금자: {self.player.gold}  |  XP: {self.player.xp}  |  HP: {self.player.hp} / {self.player.max_hp}"
+        stat_surf = self.font.render(stat_txt, True, COLOR_GOLD)
+        surf.blit(stat_surf, (SCREEN_WIDTH // 2 - stat_surf.get_width() // 2, 130))
+
+        # [UI 개선] HP 바 시각화
+        hp_ratio = self.player.hp / max(self.player.max_hp, 1)
+        bar_w, bar_h = 400, 14
+        bar_x = SCREEN_WIDTH // 2 - bar_w // 2
+        bar_y = 160
+        pygame.draw.rect(surf, (60, 20, 20), (bar_x, bar_y, bar_w, bar_h), border_radius=7)
+        pygame.draw.rect(surf, COLOR_RED, (bar_x, bar_y, int(bar_w * hp_ratio), bar_h), border_radius=7)
+
+        # [UI 개선] 메인 버튼 4개 균등 배치 (화면 중앙 기준)
+        btn_w, btn_h = 220, 120
+        gap = 30
+        total_w = btn_w * 4 + gap * 3
+        start_x = (SCREEN_WIDTH - total_w) // 2
+        btn_y = 260
+
+        main_configs = [
+            ("북쪽 출도", COLOR_RED,       lambda: self._enter_region("north")),
+            ("객잔",     COLOR_GREEN,      lambda: setattr(self, "phase", Phase.INN)),
+            ("연무장",   COLOR_BLUE,       lambda: setattr(self, "phase", Phase.TRAINING)),
+            ("비급고",   (100, 70, 160),   lambda: setattr(self, "phase", Phase.DECK)),
+        ]
+        for i, (txt, col, cmd) in enumerate(main_configs):
+            bx = start_x + i * (btn_w + gap)
+            r = pygame.Rect(bx, btn_y, btn_w, btn_h)
+            self.ui_buttons_next[f"world_{txt}"] = {"rect": r, "enabled": True, "on_click": cmd}
+            pygame.draw.rect(surf, col, r, border_radius=14)
+            # 버튼 테두리
+            pygame.draw.rect(surf, (255, 255, 255, 60), r, width=2, border_radius=14)
+            label = self.font.render(txt, True, COLOR_WHITE)
+            surf.blit(label, (r.x + (btn_w - label.get_width()) // 2, r.y + (btn_h - label.get_height()) // 2))
+
+        # [UI 개선] 기록 저장 버튼 — 하단 중앙
+        save_w, save_h = 200, 50
+        save_r = pygame.Rect(SCREEN_WIDTH // 2 - save_w // 2, 560, save_w, save_h)
+        self.ui_buttons_next["world_기록 저장"] = {"rect": save_r, "enabled": True, "on_click": self.save_current_game}
+        pygame.draw.rect(surf, (160, 130, 20), save_r, border_radius=10)
+        save_label = self.font.render("기록 저장", True, COLOR_WHITE)
+        surf.blit(save_label, (save_r.x + (save_w - save_label.get_width()) // 2, save_r.y + (save_h - save_label.get_height()) // 2))
 
     def render_victory_to(self, surf):
         title = self.font_name.render("🎊 비무 승리! 🎊", True, COLOR_GOLD)
