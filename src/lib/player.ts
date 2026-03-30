@@ -143,6 +143,7 @@ export function startTurnRegen(player: Player): Player {
 
 export function applyClashRegen(player: Player): Player {
   let p = { ...player };
+  if (p.hp <= 0) return p; // 사망 상태면 회복 불가
   if (p.clashHpRegen > 0) {
     p.hp = Math.min(p.maxHp, p.hp + p.clashHpRegen);
   }
