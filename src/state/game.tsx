@@ -29,6 +29,9 @@ export interface GameState {
   clashIndex: number; // 현재 합 번호 (0~4)
   battleLogs: BattleLog[];
   lastMessage: string;
+  playerName: string;
+  deathCount: number;
+  lastUsedCard: string;
 }
 
 const initialState: GameState = {
@@ -39,11 +42,14 @@ const initialState: GameState = {
   clashIndex: 0,
   battleLogs: [],
   lastMessage: "",
+  playerName: "",
+  deathCount: 0,
+  lastUsedCard: "",
 };
 
 // ─── Actions ────────────────────────────────────────────────
 type Action =
-  | { type: "START_GAME" }
+  | { type: "START_GAME"; name: string; inheritedMastery: number }
   | { type: "START_ENCOUNTER" }
   | { type: "PLAY_CARD"; card: Card }
   | { type: "USE_BASIC"; card: Card }
@@ -52,20 +58,31 @@ type Action =
   | { type: "FINISH_ENEMY_TURN" }
   | { type: "CONTINUE_AFTER_VICTORY" }
   | { type: "RESTART" }
-  | { type: "GO_TO_WORLD" };
+  | { type: "GO_TO_WORLD" }
+  | { type: "RESURRECT" };
 
 // ─── Reducer ────────────────────────────────────────────────
 function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case "START_GAME": {
-      const player = createPlayer("회귀한 둔재");
+      const player = createPlayer(action.name);
+      // 계승 적용: 이전 생의 깨달음으로 기본 카드 성취도 상승
+      if (action.inheritedMastery > 0) {
+        player.deck = player.deck.map((c) => ({
+          ...c,
+          mastery: Math.min(c.masteryMax, c.mastery + action.inheritedMastery),
+        }));
+      }
       return {
         ...state,
         phase: "world",
         player,
+        playerName: action.name,
         encounter: 0,
         battleLogs: [],
-        lastMessage: "강호에 발을 딛다...",
+        lastMessage: action.inheritedMastery > 0
+          ? "육체는 잊었으나, 영혼에 새겨진 검로는 기억한다."
+          : "강호에 발을 딛다...",
       };
     }
 
@@ -198,6 +215,7 @@ function gameReducer(state: GameState, action: Action): GameState {
           enemy: finalEnemy,
           clashIndex: newClash,
           battleLogs: newLogs,
+          lastUsedCard: card.name,
         };
       }
 
@@ -309,6 +327,7 @@ function gameReducer(state: GameState, action: Action): GameState {
           enemy: finalEnemy,
           clashIndex: newClash,
           battleLogs: newLogs,
+          lastUsedCard: card.name,
         };
       }
 
@@ -364,6 +383,20 @@ function gameReducer(state: GameState, action: Action): GameState {
 
     case "RESTART": {
       return { ...initialState };
+    }
+
+    case "RESURRECT": {
+      // 사망 카운트 증가, 깨달음 XP를 localStorage에 저장
+      const newDeathCount = state.deathCount + 1;
+      if (typeof window !== "undefined") {
+        const prevEnlightenment = parseInt(localStorage.getItem("guunrok_enlightenment") || "0", 10);
+        localStorage.setItem("guunrok_enlightenment", String(prevEnlightenment + 1));
+        localStorage.setItem("guunrok_deathCount", String(newDeathCount));
+      }
+      return {
+        ...initialState,
+        deathCount: newDeathCount,
+      };
     }
 
     default:
