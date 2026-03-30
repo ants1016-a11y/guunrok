@@ -123,17 +123,15 @@ export interface InnBuff {
   name: string;
 }
 
-// ─── 게임 페이즈 ────────────────────────────────────────────
-export type GamePhase =
+// ─── 화면(Screen) — 단일 진실 ────────────────────────────────
+export type Screen =
   | "title"
-  | "world"
-  | "battle_player_turn"
-  | "battle_enemy_turn"
-  | "battle_clash"
-  | "victory"
-  | "gameover"
+  | "menu"
+  | "battle"
   | "reward"
-  | "inn";
+  | "inn"
+  | "training"
+  | "death";
 
 // ─── 챕터 ───────────────────────────────────────────────────
 export interface ChapterInfo {
