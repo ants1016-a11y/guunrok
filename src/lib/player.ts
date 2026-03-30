@@ -1,4 +1,4 @@
-import { Player, PlayerStats } from "./types";
+import { Player, PlayerStats, InnBuff } from "./types";
 import { createStarterDeck } from "./cards";
 
 const BASE_ATK = 5;
@@ -106,9 +106,19 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export function startBattle(player: Player): Player {
+export function startBattle(player: Player, innBuff: InnBuff | null = null): Player {
   let p = { ...player, tempMaxEnergyBonus: 0, defense: 0 };
   p = recalculateStats(p);
+
+  // 객잔 버프 적용
+  if (innBuff) {
+    if (innBuff.type === "energy") {
+      p = { ...p, energy: (p.energy || 0) + innBuff.val };
+    } else if (innBuff.type === "maxHp") {
+      p = { ...p, maxHp: p.maxHp + innBuff.val, hp: p.hp + innBuff.val };
+    }
+    // defense 버프는 합 시작 시 적용 (reducer에서 처리)
+  }
 
   const drawPile = shuffle([...p.deck]);
   const hand = drawPile.splice(0, 5);

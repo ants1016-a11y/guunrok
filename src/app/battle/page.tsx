@@ -100,6 +100,10 @@ export default function BattlePage() {
 
   // 전투 상태가 아니면 리다이렉트
   useEffect(() => {
+    if (state.phase === "reward") {
+      router.push("/reward");
+      return;
+    }
     if (!state.player || !state.enemy) {
       if (state.phase === "title") router.push("/");
       else router.push("/world");
@@ -175,27 +179,7 @@ export default function BattlePage() {
           </div>
         )}
 
-        {/* 승리 화면 */}
-        {phase === "victory" && (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-4">🏆</div>
-            <h2 className="text-2xl font-bold text-yellow-400 mb-2">
-              비무 승리!
-            </h2>
-            <p className="text-gray-400 mb-6">
-              {enemy.name}을(를) 쓰러뜨렸습니다.
-            </p>
-            <button
-              onClick={() => {
-                dispatch({ type: "CONTINUE_AFTER_VICTORY" });
-                router.push("/world");
-              }}
-              className="px-8 py-3 bg-amber-700 hover:bg-amber-600 rounded-lg text-lg font-bold transition-colors"
-            >
-              강호로 돌아가기
-            </button>
-          </div>
-        )}
+        {/* 승리 → reward 화면으로 자동 이동 (useEffect에서 처리) */}
 
         {/* 사망 화면 */}
         {phase === "gameover" && (

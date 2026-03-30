@@ -116,6 +116,13 @@ export interface BattleLog {
   color: string; // tailwind color class
 }
 
+// ─── 객잔 버프 ──────────────────────────────────────────────
+export interface InnBuff {
+  type: "energy" | "maxHp" | "defense";
+  val: number;
+  name: string;
+}
+
 // ─── 게임 페이즈 ────────────────────────────────────────────
 export type GamePhase =
   | "title"
@@ -124,7 +131,9 @@ export type GamePhase =
   | "battle_enemy_turn"
   | "battle_clash"
   | "victory"
-  | "gameover";
+  | "gameover"
+  | "reward"
+  | "inn";
 
 // ─── 챕터 ───────────────────────────────────────────────────
 export interface ChapterInfo {

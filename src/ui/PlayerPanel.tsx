@@ -15,7 +15,7 @@ export default function PlayerPanel({ player }: Props) {
         <div>
           <h3 className="text-lg font-bold text-amber-300">{player.name}</h3>
           <div className="text-xs text-gray-400">
-            연승 {player.winStreak} | 금 {player.gold} | 경험치 {player.xp}
+            연승 {player.winStreak} | 금자 {player.gold} | 명성 {player.xp}
           </div>
         </div>
       </div>
