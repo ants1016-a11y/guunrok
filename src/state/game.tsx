@@ -28,6 +28,11 @@ const CARD_UPGRADE_BASE = 100;
 const CARD_MASTERY_MAX = 12;
 
 // ─── 저장 데이터 ────────────────────────────────────────────
+export interface RegionProgress {
+  mapNodes: MapNode[];
+  currentNodeId: number;
+}
+
 export interface SaveData {
   playerName: string;
   deathCount: number;
@@ -41,6 +46,8 @@ export interface SaveData {
   encounter: number;
   deckMasteries: { name: string; mastery: number }[];
   innBuff: InnBuff | null;
+  regionProgress: RegionProgress | null;
+  stats: { 근골: number; 심법: number; 외공: number; 경공: number; 자질: number; 행운: number } | null;
 }
 
 // ─── 보상 데이터 ────────────────────────────────────────────
@@ -146,6 +153,8 @@ function buildSaveData(state: GameState): SaveData | null {
     encounter: state.encounter,
     deckMasteries: state.player.deck.map((c) => ({ name: c.name, mastery: c.mastery })),
     innBuff: state.innBuff,
+    regionProgress: state.mapNodes ? { mapNodes: state.mapNodes, currentNodeId: state.currentNodeId } : null,
+    stats: state.player.stats,
   };
 }
 
@@ -249,6 +258,8 @@ function gameReducer(state: GameState, action: Action): GameState {
         battle: null,
         lastMessage: inheritedMastery > 0 ? "육체는 잊었으나, 영혼에 새겨진 검로는 기억한다." : "강호에 발을 딛다...",
         saveNotice: "",
+        mapNodes: null,
+        currentNodeId: -1,
       };
     }
 
@@ -346,6 +357,10 @@ function gameReducer(state: GameState, action: Action): GameState {
       return { ...state, screen: "menu", battle: null };
 
     case "ENTER_WORLDMAP": {
+      // 기존 진행 있으면 복원, 없으면 새로 생성
+      if (state.mapNodes && state.currentNodeId >= 0) {
+        return { ...state, screen: "worldmap" };
+      }
       const nodes = generateNorthRoute();
       return { ...state, screen: "worldmap", mapNodes: nodes, currentNodeId: 0 };
     }
@@ -428,22 +443,29 @@ function gameReducer(state: GameState, action: Action): GameState {
         const saved = d.deckMasteries.find((m) => m.name === c.name);
         return saved ? { ...c, mastery: saved.mastery } : c;
       });
+      // stats 복원
+      if (d.stats) {
+        player.stats = d.stats;
+      }
       player.xp = d.xp;
       player.totalXp = d.totalXp;
       player.gold = d.gold;
       player.winStreak = d.winStreak;
       player.hp = d.hp;
       player.maxHp = d.maxHp;
+      const restoredPlayer = recalculateStats(player);
       return {
         ...state,
         screen: "menu",
-        player,
+        player: restoredPlayer,
         playerName: d.playerName,
         encounter: d.encounter,
         deathCount: d.deathCount,
         inheritedMastery: d.inheritedMastery,
         innBuff: d.innBuff,
         battle: null,
+        mapNodes: d.regionProgress?.mapNodes ?? null,
+        currentNodeId: d.regionProgress?.currentNodeId ?? -1,
         lastMessage: `${d.playerName}의 기록을 불러왔습니다.`,
         saveNotice: "",
       };
