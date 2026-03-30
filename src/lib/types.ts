@@ -131,7 +131,8 @@ export type Screen =
   | "reward"
   | "inn"
   | "training"
-  | "death";
+  | "death"
+  | "worldmap";
 
 // ─── 챕터 ───────────────────────────────────────────────────
 export interface ChapterInfo {

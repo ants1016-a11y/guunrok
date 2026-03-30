@@ -15,6 +15,7 @@ export default function RewardPage() {
     if (state.screen === "menu") router.push("/world");
     if (state.screen === "battle") router.push("/battle");
     if (state.screen === "inn") router.push("/inn");
+    if (state.screen === "worldmap") router.push("/worldmap");
   }, [state.screen, router]);
 
   if (state.screen !== "reward" || !state.lastRewards || !state.player || !state.battle) return null;

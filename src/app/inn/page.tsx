@@ -27,6 +27,7 @@ export default function InnPage() {
     if (state.screen === "menu") router.push("/world");
     if (state.screen === "battle") router.push("/battle");
     if (state.screen === "reward") router.push("/reward");
+    if (state.screen === "worldmap") router.push("/worldmap");
   }, [state.screen, router]);
 
   if (!state.player || state.screen !== "inn") return null;

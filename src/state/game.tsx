@@ -17,9 +17,10 @@ import {
   InnBuff,
 } from "@/lib/types";
 import { createPlayer, startBattle, drawCards, startTurnRegen, applyClashRegen } from "@/lib/player";
-import { createEnemy, refreshIntents, executeEnemyIntent } from "@/lib/enemies";
+import { createEnemy, createEnemyByTier, refreshIntents, executeEnemyIntent } from "@/lib/enemies";
 import { executeCardEffect } from "@/lib/cards";
 import { recalculateStats } from "@/lib/player";
+import { MapNode, generateNorthRoute } from "@/lib/worldmap";
 
 // ─── 상수 ───────────────────────────────────────────────────
 const TRAIN_STAT_COST = 50;
@@ -72,6 +73,8 @@ export interface GameState {
   lastMessage: string;
   battle: BattleState | null;
   saveNotice: string;
+  mapNodes: MapNode[] | null;
+  currentNodeId: number;
 }
 
 const initialState: GameState = {
@@ -87,6 +90,8 @@ const initialState: GameState = {
   lastMessage: "",
   battle: null,
   saveNotice: "",
+  mapNodes: null,
+  currentNodeId: -1,
 };
 
 // ─── Actions ────────────────────────────────────────────────
@@ -107,7 +112,10 @@ type Action =
   | { type: "RESURRECT" }
   | { type: "SAVE_GAME" }
   | { type: "LOAD_GAME"; data: SaveData }
-  | { type: "GO_MENU" };
+  | { type: "GO_MENU" }
+  | { type: "ENTER_WORLDMAP" }
+  | { type: "VISIT_NODE"; nodeId: number }
+  | { type: "BACK_TO_WORLDMAP" };
 
 // ─── 헬퍼 ───────────────────────────────────────────────────
 function randInt(min: number, max: number) {
@@ -277,9 +285,10 @@ function gameReducer(state: GameState, action: Action): GameState {
     case "CONTINUE_TO_NEXT": {
       if (!state.player) return state;
       const heal = Math.floor(state.player.maxHp * 0.3);
+      const nextScreen: Screen = state.mapNodes ? "worldmap" : "menu";
       return {
         ...state,
-        screen: "menu",
+        screen: nextScreen,
         player: { ...state.player, hp: Math.min(state.player.maxHp, state.player.hp + heal) },
         battle: null,
         innBuff: null,
@@ -301,13 +310,13 @@ function gameReducer(state: GameState, action: Action): GameState {
     }
 
     case "LEAVE_INN":
-      return { ...state, screen: "menu" };
+      return { ...state, screen: state.mapNodes ? "worldmap" : "menu" };
 
     case "VISIT_TRAINING":
       return { ...state, screen: "training" };
 
     case "LEAVE_TRAINING":
-      return { ...state, screen: "menu" };
+      return { ...state, screen: state.mapNodes ? "worldmap" : "menu" };
 
     case "UPGRADE_STAT": {
       if (!state.player || state.player.xp < TRAIN_STAT_COST) return state;
@@ -334,6 +343,63 @@ function gameReducer(state: GameState, action: Action): GameState {
 
     case "GO_MENU":
       return { ...state, screen: "menu", battle: null };
+
+    case "ENTER_WORLDMAP": {
+      const nodes = generateNorthRoute();
+      return { ...state, screen: "worldmap", mapNodes: nodes, currentNodeId: 0 };
+    }
+
+    case "VISIT_NODE": {
+      if (!state.player || !state.mapNodes) return state;
+      const node = state.mapNodes.find((n) => n.id === action.nodeId);
+      if (!node || node.visited) return state;
+
+      // 현재 노드에서 연결된 노드만 방문 가능
+      const current = state.mapNodes.find((n) => n.id === state.currentNodeId);
+      if (!current || !current.connections.includes(action.nodeId)) return state;
+
+      // 노드 방문 처리
+      const updatedNodes = state.mapNodes.map((n) =>
+        n.id === action.nodeId ? { ...n, visited: true } : n
+      );
+
+      if (node.type === "combat" || node.type === "boss") {
+        const enc = state.encounter + 1;
+        const enemy = refreshIntents(createEnemyByTier(node.tier));
+        const player = startBattle(state.player, state.innBuff);
+        return {
+          ...state,
+          screen: "battle",
+          player,
+          encounter: enc,
+          mapNodes: updatedNodes,
+          currentNodeId: action.nodeId,
+          battle: {
+            enemy,
+            clashIndex: 0,
+            logs: [{ text: `${enemy.name}이(가) 앞을 막아선다!`, color: "text-red-400" }],
+            playerTurn: true,
+          },
+          lastMessage: "",
+        };
+      }
+
+      if (node.type === "inn") {
+        return { ...state, screen: "inn", mapNodes: updatedNodes, currentNodeId: action.nodeId };
+      }
+
+      if (node.type === "training") {
+        return { ...state, screen: "training", mapNodes: updatedNodes, currentNodeId: action.nodeId };
+      }
+
+      // city: 방문만 처리
+      return { ...state, mapNodes: updatedNodes, currentNodeId: action.nodeId };
+    }
+
+    case "BACK_TO_WORLDMAP": {
+      if (!state.mapNodes) return { ...state, screen: "menu" };
+      return { ...state, screen: "worldmap" };
+    }
 
     case "RESURRECT": {
       const newDeath = state.deathCount + 1;

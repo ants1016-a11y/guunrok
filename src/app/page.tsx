@@ -17,6 +17,7 @@ export default function TitlePage() {
     if (state.screen === "battle") router.push("/battle");
     if (state.screen === "reward") router.push("/reward");
     if (state.screen === "inn") router.push("/inn");
+    if (state.screen === "worldmap") router.push("/worldmap");
   }, [state.screen, router]);
 
   useEffect(() => {

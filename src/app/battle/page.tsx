@@ -65,6 +65,7 @@ export default function BattlePage() {
     if (state.screen === "menu") router.push("/world");
     if (state.screen === "reward") router.push("/reward");
     if (state.screen === "inn") router.push("/inn");
+    if (state.screen === "worldmap") router.push("/worldmap");
   }, [state.screen, router]);
 
   if (!state.player || !state.battle || (state.screen !== "battle" && state.screen !== "death")) return null;

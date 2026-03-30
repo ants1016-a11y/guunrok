@@ -98,6 +98,21 @@ export function createEnemy(encounter: number): Enemy {
   };
 }
 
+// ─── 티어 기반 적 생성 (월드맵용) ───────────────────────────
+export function createEnemyByTier(tier: number): Enemy {
+  if (tier >= 5) {
+    return { type: "boss_macheon", name: "녹림왕 마천광", hp: 320, maxHp: 320, atk: 20, level: 10, defense: 0, intentQueue: [], isOverloaded: false, isImmovable: false, cycle: 0 };
+  }
+  if (tier >= 3) {
+    return { type: "nokrim_captain", name: "녹림 행동대장", hp: 65, maxHp: 65, atk: 10, level: 3, defense: 0, intentQueue: [] };
+  }
+  if (tier >= 2) {
+    return { type: "nokrim_captain", name: "녹림 행동대장", hp: 65, maxHp: 65, atk: 10, level: 3, defense: 0, intentQueue: [] };
+  }
+  const special = MINION_SPECIALS[Math.floor(Math.random() * MINION_SPECIALS.length)] as EnemyIntent;
+  return { type: "nokrim_minion", name: "산채 졸개", hp: 40, maxHp: 40, atk: 7, level: 1, defense: 0, intentQueue: [], specialMove: special };
+}
+
 // ─── 의도 생성 ──────────────────────────────────────────────
 export function refreshIntents(enemy: Enemy): Enemy {
   const e = { ...enemy, intentQueue: [] as EnemyIntent[] };

@@ -18,6 +18,7 @@ export default function WorldPage() {
     if (state.screen === "reward") router.push("/reward");
     if (state.screen === "inn") router.push("/inn");
     if (state.screen === "training") router.push("/training");
+    if (state.screen === "worldmap") router.push("/worldmap");
   }, [state.screen, router]);
 
   if (!state.player || state.screen !== "menu") return null;
@@ -84,9 +85,13 @@ export default function WorldPage() {
           </div>
 
           <div className="flex flex-col gap-3 mt-6">
+            <button onClick={() => dispatch({ type: "ENTER_WORLDMAP" })}
+              className="w-full py-4 bg-red-900 hover:bg-red-800 rounded-lg text-lg font-bold transition-all transform hover:scale-[1.02] active:scale-[0.98] text-red-100">
+              🗺️ 북쪽 출도 (녹림 루트)
+            </button>
             <button onClick={() => dispatch({ type: "START_BATTLE" })}
               className={`w-full py-4 rounded-lg text-lg font-bold transition-all transform hover:scale-[1.02] active:scale-[0.98] ${isBoss ? "bg-red-800 hover:bg-red-700 text-red-100" : "bg-amber-800 hover:bg-amber-700 text-amber-100"}`}>
-              {isBoss ? "보스에게 도전하기" : "앞으로 나아가기"}
+              {isBoss ? "보스에게 도전하기" : "앞으로 나아가기 (선형)"}
             </button>
             <div className="flex gap-3">
               <button onClick={() => dispatch({ type: "VISIT_INN" })}

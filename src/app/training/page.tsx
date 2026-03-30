@@ -25,6 +25,7 @@ export default function TrainingPage() {
     if (state.screen === "title") router.push("/");
     if (state.screen === "menu") router.push("/world");
     if (state.screen === "battle") router.push("/battle");
+    if (state.screen === "worldmap") router.push("/worldmap");
   }, [state.screen, router]);
 
   if (!state.player || state.screen !== "training") return null;
