@@ -29,11 +29,14 @@ export default function TitlePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col items-center justify-center text-white">
-      <div className="text-center mb-10">
+      <div className="text-center mb-8">
         <div className="text-6xl mb-6">{"⚔️"}</div>
         <h1 className="text-5xl font-bold text-amber-400 mb-2 tracking-wider">
           구운록
         </h1>
+        <p className="text-base text-gray-400 mt-3 tracking-wide">
+          느리게, 그러나 끝까지
+        </p>
         <div className="w-32 h-px bg-amber-700 mx-auto mt-4" />
       </div>
 
@@ -49,9 +52,13 @@ export default function TitlePage() {
           </>
         ) : (
           <>
-            <p>첩첩산중을 헤치며 처음 강호에 발을 딛다.</p>
-            <p className="mt-2">
-              {"녹림의 산적부터 혈교의 장로까지 \u2014 모두 쓰러뜨린다."}
+            <p className="text-gray-400">나는 천재가 아니다.</p>
+            <p className="text-gray-400">하지만 포기하지 않는 법은 배웠다.</p>
+            <p className="mt-3 text-gray-500">
+              남이 한 번에 깨우치는 수를, 나는 열 번 갈고
+            </p>
+            <p className="text-gray-500">
+              남이 가볍게 넘기는 합을, 나는 백 번 되새긴다.
             </p>
           </>
         )}
@@ -94,8 +101,9 @@ export default function TitlePage() {
       </button>
 
       <div className="mt-16 text-center text-xs text-gray-600 space-y-1">
-        <p>{"턴제 카드 배틀 \u2014 5합 1턴"}</p>
-        <p>무공 카드를 선택하면 적과 동시에 초식을 겨룬다</p>
+        <p>{"턴제 카드 비무 \u2014 5합 1턴"}</p>
+        <p>무공을 고르면, 적과 동시에 초식을 겨룬다.</p>
+        <p>{"한 합, 한 합\u2014강호는 끝내 나를 인정한다."}</p>
       </div>
 
       <div className="absolute bottom-4 text-xs text-gray-700">
