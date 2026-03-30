@@ -94,6 +94,8 @@ type Action =
   | { type: "INN_REST"; ratio: number; cost: number }
   | { type: "INN_EAT"; buff: InnBuff; cost: number }
   | { type: "LEAVE_INN" }
+  | { type: "VISIT_TRAINING" }
+  | { type: "LEAVE_TRAINING" }
   | { type: "RESURRECT" }
   | { type: "SAVE_GAME" }
   | { type: "LOAD_GAME"; data: SaveData }
@@ -291,6 +293,12 @@ function gameReducer(state: GameState, action: Action): GameState {
     }
 
     case "LEAVE_INN":
+      return { ...state, screen: "menu" };
+
+    case "VISIT_TRAINING":
+      return { ...state, screen: "training" };
+
+    case "LEAVE_TRAINING":
       return { ...state, screen: "menu" };
 
     case "GO_MENU":

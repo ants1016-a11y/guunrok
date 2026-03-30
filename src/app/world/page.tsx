@@ -17,6 +17,7 @@ export default function WorldPage() {
     if (state.screen === "battle") router.push("/battle");
     if (state.screen === "reward") router.push("/reward");
     if (state.screen === "inn") router.push("/inn");
+    if (state.screen === "training") router.push("/training");
   }, [state.screen, router]);
 
   if (!state.player || state.screen !== "menu") return null;
@@ -87,6 +88,16 @@ export default function WorldPage() {
               className={`w-full py-4 rounded-lg text-lg font-bold transition-all transform hover:scale-[1.02] active:scale-[0.98] ${isBoss ? "bg-red-800 hover:bg-red-700 text-red-100" : "bg-amber-800 hover:bg-amber-700 text-amber-100"}`}>
               {isBoss ? "보스에게 도전하기" : "앞으로 나아가기"}
             </button>
+            <div className="flex gap-3">
+              <button onClick={() => dispatch({ type: "VISIT_INN" })}
+                className="flex-1 py-3 bg-emerald-800 hover:bg-emerald-700 rounded-lg text-base font-bold transition-colors">
+                🏮 취선루
+              </button>
+              <button onClick={() => dispatch({ type: "VISIT_TRAINING" })}
+                className="flex-1 py-3 bg-indigo-800 hover:bg-indigo-700 rounded-lg text-base font-bold transition-colors">
+                ⚔️ 연무장
+              </button>
+            </div>
             <button onClick={() => dispatch({ type: "SAVE_GAME" })}
               className="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-300 transition-colors">
               기록 저장
