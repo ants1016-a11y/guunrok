@@ -1,28 +1,8 @@
-.venv/
-__pycache__/
-*.pyc
-.DS_Store
-.cursor/
-logs/
-
-# --- generated / local ---
-logs/
-debug/
-__pycache__/
-*.pyc
+node_modules/
+.next/
+out/
 .env
+.env.local
+*.tsbuildinfo
+next-env.d.ts
 .DS_Store
-venv/
-.venv/
-assets/
-
-# --- generated / local ---
-logs/
-debug/
-__pycache__/
-*.pyc
-.env
-.DS_Store
-venv/
-.venv/
-assets/
