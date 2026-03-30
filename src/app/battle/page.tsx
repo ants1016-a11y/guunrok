@@ -123,7 +123,7 @@ export default function BattlePage() {
           <DeathScreen
             playerName={state.playerName || player.name}
             encounter={encounter}
-            deathCount={state.deathCount}
+            deathCount={state.legacy.deathCount}
             enemyName={enemy.name}
             lastUsedCard={state.lastUsedCard}
             winStreak={player.winStreak}
