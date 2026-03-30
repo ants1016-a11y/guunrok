@@ -19,6 +19,12 @@ import {
 import { createPlayer, startBattle, drawCards, startTurnRegen, applyClashRegen } from "@/lib/player";
 import { createEnemy, refreshIntents, executeEnemyIntent } from "@/lib/enemies";
 import { executeCardEffect } from "@/lib/cards";
+import { recalculateStats } from "@/lib/player";
+
+// ─── 상수 ───────────────────────────────────────────────────
+const TRAIN_STAT_COST = 50;
+const CARD_UPGRADE_BASE = 100;
+const CARD_MASTERY_MAX = 12;
 
 // ─── 저장 데이터 ────────────────────────────────────────────
 export interface SaveData {
@@ -96,6 +102,8 @@ type Action =
   | { type: "LEAVE_INN" }
   | { type: "VISIT_TRAINING" }
   | { type: "LEAVE_TRAINING" }
+  | { type: "UPGRADE_STAT"; stat: string }
+  | { type: "UPGRADE_CARD"; cardId: string }
   | { type: "RESURRECT" }
   | { type: "SAVE_GAME" }
   | { type: "LOAD_GAME"; data: SaveData }
@@ -300,6 +308,29 @@ function gameReducer(state: GameState, action: Action): GameState {
 
     case "LEAVE_TRAINING":
       return { ...state, screen: "menu" };
+
+    case "UPGRADE_STAT": {
+      if (!state.player || state.player.xp < TRAIN_STAT_COST) return state;
+      const stat = action.stat as keyof typeof state.player.stats;
+      if (!(stat in state.player.stats)) return state;
+      const newStats = { ...state.player.stats, [stat]: state.player.stats[stat] + 1 };
+      let p = { ...state.player, stats: newStats, xp: state.player.xp - TRAIN_STAT_COST };
+      p = recalculateStats(p);
+      return { ...state, player: p };
+    }
+
+    case "UPGRADE_CARD": {
+      if (!state.player) return state;
+      const idx = state.player.deck.findIndex((c) => c.id === action.cardId);
+      if (idx === -1) return state;
+      const card = state.player.deck[idx];
+      if (card.mastery >= CARD_MASTERY_MAX) return state;
+      const cost = CARD_UPGRADE_BASE * (card.mastery ** 2);
+      if (state.player.xp < cost) return state;
+      const newDeck = [...state.player.deck];
+      newDeck[idx] = { ...card, mastery: card.mastery + 1 };
+      return { ...state, player: { ...state.player, deck: newDeck, xp: state.player.xp - cost } };
+    }
 
     case "GO_MENU":
       return { ...state, screen: "menu", battle: null };
