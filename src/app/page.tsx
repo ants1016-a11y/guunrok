@@ -7,17 +7,23 @@ import { useState, useEffect } from "react";
 export default function TitlePage() {
   const dispatch = useGameDispatch();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [name, setName] = useState("");
   const [inheritedMastery, setInheritedMastery] = useState(0);
   const [deathCount, setDeathCount] = useState(0);
 
   useEffect(() => {
-    const saved = localStorage.getItem("guunrok_playerName");
-    if (saved) setName(saved);
-    const enlightenment = parseInt(localStorage.getItem("guunrok_enlightenment") || "0", 10);
-    setInheritedMastery(enlightenment);
-    const deaths = parseInt(localStorage.getItem("guunrok_deathCount") || "0", 10);
-    setDeathCount(deaths);
+    setMounted(true);
+    try {
+      const saved = localStorage.getItem("guunrok_playerName");
+      if (saved) setName(saved);
+      const enlightenment = parseInt(localStorage.getItem("guunrok_enlightenment") || "0", 10);
+      setInheritedMastery(enlightenment);
+      const deaths = parseInt(localStorage.getItem("guunrok_deathCount") || "0", 10);
+      setDeathCount(deaths);
+    } catch {
+      // localStorage 접근 불가 환경 대비
+    }
   }, []);
 
   const handleStart = () => {
@@ -26,6 +32,17 @@ export default function TitlePage() {
     dispatch({ type: "START_GAME", name: finalName, inheritedMastery });
     router.push("/world");
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center text-white">
+        <div className="text-center">
+          <div className="text-6xl mb-4">{"⚔️"}</div>
+          <p className="text-gray-500 text-sm animate-pulse">불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col items-center justify-center text-white">
