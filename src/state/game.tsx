@@ -24,7 +24,6 @@ import { recalculateStats } from "@/lib/player";
 import { MapNode, generateNorthRoute } from "@/lib/worldmap";
 
 // ─── 상수 ───────────────────────────────────────────────────
-const TRAIN_STAT_COST_BASE = 50;
 const CARD_UPGRADE_BASE = 100;
 const CARD_MASTERY_MAX = 12;
 const STAT_MAX = 30;
@@ -34,14 +33,12 @@ export interface LegacyData {
   statsBase: PlayerStats;
   unlockedCards: string[]; // 스타터 외 해금된 카드 이름 목록
   deathCount: number;
-  totalStatUps: number; // 누적 스탯 강화 횟수 (비용 증가용)
 }
 
 const DEFAULT_LEGACY: LegacyData = {
   statsBase: { 근골: 10, 심법: 10, 외공: 10, 경공: 10, 자질: 10, 행운: 10 },
   unlockedCards: [],
   deathCount: 0,
-  totalStatUps: 0,
 };
 
 function loadLegacy(): LegacyData {
@@ -165,8 +162,8 @@ function calculateRewards(enemy: Enemy, winStreak: number): LastRewards {
   return { xp: Math.round((20 + randInt(0, 10)) * mul), gold: 10 + randInt(0, 5), streak: winStreak + 1, isBoss };
 }
 
-function getStatUpgradeCost(legacy: LegacyData): number {
-  return TRAIN_STAT_COST_BASE + legacy.totalStatUps;
+function getStatUpgradeCost(currentStatValue: number): number {
+  return currentStatValue + 40;
 }
 
 function buildSaveData(state: GameState): SaveData | null {
@@ -337,13 +334,12 @@ function gameReducer(state: GameState, action: Action): GameState {
       const stat = action.stat as keyof PlayerStats;
       if (!(stat in state.player.stats)) return state;
       if (state.player.stats[stat] >= STAT_MAX) return state;
-      const cost = getStatUpgradeCost(state.legacy);
+      const cost = getStatUpgradeCost(state.player.stats[stat]);
       if (state.player.xp < cost) return state;
       const newStats = { ...state.player.stats, [stat]: state.player.stats[stat] + 1 };
       let p = { ...state.player, stats: newStats, xp: state.player.xp - cost };
       p = recalculateStats(p);
-      // 영구 저장에도 반영
-      const newLegacy = { ...state.legacy, statsBase: newStats, totalStatUps: state.legacy.totalStatUps + 1 };
+      const newLegacy = { ...state.legacy, statsBase: newStats };
       saveLegacy(newLegacy);
       return { ...state, player: p, legacy: newLegacy };
     }

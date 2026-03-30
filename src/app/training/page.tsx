@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getCurrentValue } from "@/lib/types";
 
-const TRAIN_STAT_COST_BASE = 50;
 const CARD_UPGRADE_BASE = 100;
 const CARD_MASTERY_MAX = 12;
 const STAT_MAX = 30;
@@ -51,7 +50,7 @@ export default function TrainingPage() {
             {STAT_INFO.map(({ key, label, desc }) => {
               const val = player.stats[key as keyof typeof player.stats];
               const atMax = val >= STAT_MAX;
-              const cost = TRAIN_STAT_COST_BASE + (state.legacy?.totalStatUps ?? 0);
+              const cost = val + 40;
               const canUpgrade = !atMax && player.xp >= cost;
               return (
                 <div key={key}
