@@ -42,11 +42,12 @@ function DeathScreen({ playerName, encounter, deathCount, enemyName, lastUsedCar
         </div>
         <div className="bg-purple-950/40 border border-purple-800/50 rounded-lg px-4 py-3 mb-6">
           <p className="text-purple-300 text-sm italic">영혼에 새겨진 검로는 기억한다.</p>
-          <p className="text-purple-400 text-xs mt-1">다음 생에서 기본 무공 성취도가 +1 계승됩니다.</p>
+          <p className="text-purple-400 text-xs mt-1">기초 스탯과 해금된 무공은 다음 생에 이어진다.</p>
+          <p className="text-purple-500 text-xs mt-0.5">무공 성취도·월드맵 진행·연승은 초기화됩니다.</p>
         </div>
         <button onClick={onResurrect}
           className="px-10 py-3 bg-red-800 hover:bg-red-700 rounded-lg text-lg font-bold transition-all transform hover:scale-105 active:scale-95">
-          다시 일어서다
+          다시 강호에 발을 딛는다
         </button>
       </div>
     </div>

@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getCurrentValue } from "@/lib/types";
 
-const TRAIN_STAT_COST = 50;
+const TRAIN_STAT_COST_BASE = 50;
 const CARD_UPGRADE_BASE = 100;
 const CARD_MASTERY_MAX = 12;
+const STAT_MAX = 30;
 
 const STAT_INFO: { key: string; label: string; desc: string }[] = [
   { key: "근골", label: "근골", desc: "최대 기혈 · 방어 시작치 · 회복의 바닥" },
@@ -49,7 +50,9 @@ export default function TrainingPage() {
           <div className="flex flex-col gap-3">
             {STAT_INFO.map(({ key, label, desc }) => {
               const val = player.stats[key as keyof typeof player.stats];
-              const canUpgrade = player.xp >= TRAIN_STAT_COST;
+              const atMax = val >= STAT_MAX;
+              const cost = TRAIN_STAT_COST_BASE + (state.legacy?.totalStatUps ?? 0);
+              const canUpgrade = !atMax && player.xp >= cost;
               return (
                 <div key={key}
                   className="flex items-center justify-between bg-gray-800/60 rounded-lg border border-gray-700 p-4">
@@ -57,6 +60,7 @@ export default function TrainingPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-white font-bold">{label}</span>
                       <span className="text-amber-400 font-mono text-lg">{val}</span>
+                      {atMax && <span className="text-xs text-emerald-400">(극)</span>}
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{desc}</p>
                   </div>
@@ -69,7 +73,7 @@ export default function TrainingPage() {
                         : "bg-gray-800 text-gray-600 cursor-not-allowed"
                     }`}
                   >
-                    강화 (명성 {TRAIN_STAT_COST})
+                    {atMax ? "극의" : `강화 (명성 ${cost})`}
                   </button>
                 </div>
               );

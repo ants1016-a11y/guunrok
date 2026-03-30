@@ -15,19 +15,50 @@ import {
   Screen,
   Card,
   InnBuff,
+  PlayerStats,
 } from "@/lib/types";
 import { createPlayer, startBattle, drawCards, startTurnRegen, applyClashRegen } from "@/lib/player";
 import { createEnemy, createEnemyByTier, refreshIntents, executeEnemyIntent } from "@/lib/enemies";
-import { executeCardEffect } from "@/lib/cards";
+import { executeCardEffect, createDeckFromUnlocked, STARTER_CARD_NAMES } from "@/lib/cards";
 import { recalculateStats } from "@/lib/player";
 import { MapNode, generateNorthRoute } from "@/lib/worldmap";
 
 // ─── 상수 ───────────────────────────────────────────────────
-const TRAIN_STAT_COST = 50;
+const TRAIN_STAT_COST_BASE = 50;
 const CARD_UPGRADE_BASE = 100;
 const CARD_MASTERY_MAX = 12;
+const STAT_MAX = 30;
 
-// ─── 저장 데이터 ────────────────────────────────────────────
+// ─── 영구 저장 (guunrok_legacy) ─────────────────────────────
+export interface LegacyData {
+  statsBase: PlayerStats;
+  unlockedCards: string[]; // 스타터 외 해금된 카드 이름 목록
+  deathCount: number;
+  totalStatUps: number; // 누적 스탯 강화 횟수 (비용 증가용)
+}
+
+const DEFAULT_LEGACY: LegacyData = {
+  statsBase: { 근골: 10, 심법: 10, 외공: 10, 경공: 10, 자질: 10, 행운: 10 },
+  unlockedCards: [],
+  deathCount: 0,
+  totalStatUps: 0,
+};
+
+function loadLegacy(): LegacyData {
+  if (typeof window === "undefined") return DEFAULT_LEGACY;
+  try {
+    const raw = localStorage.getItem("guunrok_legacy");
+    if (raw) return { ...DEFAULT_LEGACY, ...JSON.parse(raw) };
+  } catch { /* noop */ }
+  return DEFAULT_LEGACY;
+}
+
+function saveLegacy(data: LegacyData) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("guunrok_legacy", JSON.stringify(data));
+}
+
+// ─── 임시 저장 (guunrok_save) ───────────────────────────────
 export interface RegionProgress {
   mapNodes: MapNode[];
   currentNodeId: number;
@@ -35,8 +66,6 @@ export interface RegionProgress {
 
 export interface SaveData {
   playerName: string;
-  deathCount: number;
-  inheritedMastery: number;
   xp: number;
   totalXp: number;
   gold: number;
@@ -45,12 +74,13 @@ export interface SaveData {
   maxHp: number;
   encounter: number;
   deckMasteries: { name: string; mastery: number }[];
+  deckNames: string[];
   innBuff: InnBuff | null;
   regionProgress: RegionProgress | null;
-  stats: { 근골: number; 심법: number; 외공: number; 경공: number; 자질: number; 행운: number } | null;
+  stats: PlayerStats;
 }
 
-// ─── 보상 데이터 ────────────────────────────────────────────
+// ─── 보상 / 전투 서브 상태 ──────────────────────────────────
 export interface LastRewards {
   xp: number;
   gold: number;
@@ -58,12 +88,11 @@ export interface LastRewards {
   isBoss: boolean;
 }
 
-// ─── 전투 서브 상태 ─────────────────────────────────────────
 export interface BattleState {
   enemy: Enemy;
   clashIndex: number;
   logs: BattleLog[];
-  playerTurn: boolean; // true = 플레이어 턴, false = 연출 중
+  playerTurn: boolean;
 }
 
 // ─── GameState ──────────────────────────────────────────────
@@ -72,8 +101,7 @@ export interface GameState {
   playerName: string;
   player: Player | null;
   encounter: number;
-  deathCount: number;
-  inheritedMastery: number;
+  legacy: LegacyData;
   innBuff: InnBuff | null;
   lastRewards: LastRewards | null;
   lastUsedCard: string;
@@ -89,8 +117,7 @@ const initialState: GameState = {
   playerName: "",
   player: null,
   encounter: 0,
-  deathCount: 0,
-  inheritedMastery: 0,
+  legacy: DEFAULT_LEGACY,
   innBuff: null,
   lastRewards: null,
   lastUsedCard: "",
@@ -138,12 +165,14 @@ function calculateRewards(enemy: Enemy, winStreak: number): LastRewards {
   return { xp: Math.round((20 + randInt(0, 10)) * mul), gold: 10 + randInt(0, 5), streak: winStreak + 1, isBoss };
 }
 
+function getStatUpgradeCost(legacy: LegacyData): number {
+  return TRAIN_STAT_COST_BASE + legacy.totalStatUps;
+}
+
 function buildSaveData(state: GameState): SaveData | null {
   if (!state.player) return null;
   return {
     playerName: state.playerName,
-    deathCount: state.deathCount,
-    inheritedMastery: state.inheritedMastery,
     xp: state.player.xp,
     totalXp: state.player.totalXp,
     gold: state.player.gold,
@@ -152,6 +181,7 @@ function buildSaveData(state: GameState): SaveData | null {
     maxHp: state.player.maxHp,
     encounter: state.encounter,
     deckMasteries: state.player.deck.map((c) => ({ name: c.name, mastery: c.mastery })),
+    deckNames: state.player.deck.map((c) => c.name),
     innBuff: state.innBuff,
     regionProgress: state.mapNodes ? { mapNodes: state.mapNodes, currentNodeId: state.currentNodeId } : null,
     stats: state.player.stats,
@@ -163,10 +193,7 @@ function processClash(state: GameState, card: Card, isFromHand: boolean, isCrit:
   if (!state.player || !state.battle) return state;
   const { enemy } = state.battle;
 
-  const pCost = isFromHand
-    ? { ...state.player, energy: state.player.energy - card.cost }
-    : state.player;
-
+  const pCost = isFromHand ? { ...state.player, energy: state.player.energy - card.cost } : state.player;
   const { player: pAfter, enemy: eAfter, message } = executeCardEffect(card.name, pCost, enemy, card, isCrit);
 
   const intent = eAfter.intentQueue[0];
@@ -177,9 +204,7 @@ function processClash(state: GameState, card: Card, isFromHand: boolean, isCrit:
   if (intent) {
     fe = { ...eAfter, intentQueue: eAfter.intentQueue.slice(1) };
     const r = executeEnemyIntent(intent, fe, fp);
-    fp = r.player;
-    fe = r.enemy;
-    eMsg = r.message;
+    fp = r.player; fe = r.enemy; eMsg = r.message;
   }
 
   fp = applyClashRegen(fp);
@@ -198,7 +223,6 @@ function processClash(state: GameState, card: Card, isFromHand: boolean, isCrit:
 
   const newClash = state.battle.clashIndex + 1;
 
-  // 적 사망 → reward
   if (fe.hp <= 0) {
     const rewards = calculateRewards(fe, fp.winStreak);
     fp = { ...fp, xp: fp.xp + rewards.xp, totalXp: fp.totalXp + rewards.xp, gold: fp.gold + rewards.gold, winStreak: fp.winStreak + 1 };
@@ -206,18 +230,15 @@ function processClash(state: GameState, card: Card, isFromHand: boolean, isCrit:
     return { ...state, screen: "reward", player: fp, battle: { ...state.battle, enemy: fe, clashIndex: newClash, logs, playerTurn: false }, lastRewards: rewards };
   }
 
-  // 플레이어 사망
   if (fp.hp <= 0) {
     logs.push({ text: "주화입마... 의식이 흐려진다.", color: "text-red-600" });
     return { ...state, screen: "death", player: fp, battle: { ...state.battle, enemy: fe, clashIndex: newClash, logs, playerTurn: false }, lastUsedCard: card.name };
   }
 
-  // 5합 종료 → 새 턴
   if (newClash >= 5 || fe.intentQueue.length === 0) {
     fe = refreshIntents(fe);
     fp = startTurnRegen(fp);
     fp = drawCards(fp, Math.max(0, 5 - fp.hand.length));
-    // 합 시작: 방어도 = calcDef(stats) 기반 + 용정차 버프
     let newDef = fp.baseDefense;
     if (state.innBuff?.type === "defense") newDef += state.innBuff.val;
     fp = { ...fp, defense: newDef };
@@ -234,32 +255,27 @@ function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
 
     case "START_GAME": {
-      // localStorage에서 계승 데이터 로드
-      let deathCount = 0;
-      let inheritedMastery = 0;
-      if (typeof window !== "undefined") {
-        deathCount = parseInt(localStorage.getItem("guunrok_deathCount") || "0", 10);
-        inheritedMastery = parseInt(localStorage.getItem("guunrok_enlightenment") || "0", 10);
-      }
+      const legacy = loadLegacy();
       const player = createPlayer(action.name);
-      if (inheritedMastery > 0) {
-        player.deck = player.deck.map((c) => ({ ...c, mastery: Math.min(c.masteryMax, c.mastery + inheritedMastery) }));
-      }
+      // 영구 스탯 적용
+      player.stats = { ...legacy.statsBase };
+      // 해금된 카드로 덱 구성 (mastery 1성)
+      player.deck = createDeckFromUnlocked(legacy.unlockedCards);
+      const p = recalculateStats(player);
       return {
         ...state,
         screen: "menu",
-        player,
+        player: { ...p, hp: p.maxHp, energy: p.maxEnergy },
         playerName: action.name,
         encounter: 0,
-        deathCount,
-        inheritedMastery,
+        legacy,
         innBuff: null,
         lastRewards: null,
         battle: null,
-        lastMessage: inheritedMastery > 0 ? "육체는 잊었으나, 영혼에 새겨진 검로는 기억한다." : "강호에 발을 딛다...",
-        saveNotice: "",
         mapNodes: null,
         currentNodeId: -1,
+        lastMessage: legacy.deathCount > 0 ? "다시 강호에 발을 딛는다." : "강호에 발을 딛다...",
+        saveNotice: "",
       };
     }
 
@@ -269,16 +285,8 @@ function gameReducer(state: GameState, action: Action): GameState {
       const enemy = refreshIntents(createEnemy(enc));
       const player = startBattle(state.player, state.innBuff);
       return {
-        ...state,
-        screen: "battle",
-        player,
-        encounter: enc,
-        battle: {
-          enemy,
-          clashIndex: 0,
-          logs: [{ text: `${enemy.name}이(가) 앞을 막아선다!`, color: "text-red-400" }],
-          playerTurn: true,
-        },
+        ...state, screen: "battle", player, encounter: enc,
+        battle: { enemy, clashIndex: 0, logs: [{ text: `${enemy.name}이(가) 앞을 막아선다!`, color: "text-red-400" }], playerTurn: true },
         lastMessage: "",
       };
     }
@@ -298,13 +306,7 @@ function gameReducer(state: GameState, action: Action): GameState {
       if (!state.player) return state;
       const heal = Math.floor(state.player.maxHp * 0.3);
       const nextScreen: Screen = state.mapNodes ? "worldmap" : "menu";
-      return {
-        ...state,
-        screen: nextScreen,
-        player: { ...state.player, hp: Math.min(state.player.maxHp, state.player.hp + heal) },
-        battle: null,
-        innBuff: null,
-      };
+      return { ...state, screen: nextScreen, player: { ...state.player, hp: Math.min(state.player.maxHp, state.player.hp + heal) }, battle: null, innBuff: null };
     }
 
     case "VISIT_INN":
@@ -331,13 +333,19 @@ function gameReducer(state: GameState, action: Action): GameState {
       return { ...state, screen: state.mapNodes ? "worldmap" : "menu" };
 
     case "UPGRADE_STAT": {
-      if (!state.player || state.player.xp < TRAIN_STAT_COST) return state;
-      const stat = action.stat as keyof typeof state.player.stats;
+      if (!state.player) return state;
+      const stat = action.stat as keyof PlayerStats;
       if (!(stat in state.player.stats)) return state;
+      if (state.player.stats[stat] >= STAT_MAX) return state;
+      const cost = getStatUpgradeCost(state.legacy);
+      if (state.player.xp < cost) return state;
       const newStats = { ...state.player.stats, [stat]: state.player.stats[stat] + 1 };
-      let p = { ...state.player, stats: newStats, xp: state.player.xp - TRAIN_STAT_COST };
+      let p = { ...state.player, stats: newStats, xp: state.player.xp - cost };
       p = recalculateStats(p);
-      return { ...state, player: p };
+      // 영구 저장에도 반영
+      const newLegacy = { ...state.legacy, statsBase: newStats, totalStatUps: state.legacy.totalStatUps + 1 };
+      saveLegacy(newLegacy);
+      return { ...state, player: p, legacy: newLegacy };
     }
 
     case "UPGRADE_CARD": {
@@ -357,74 +365,53 @@ function gameReducer(state: GameState, action: Action): GameState {
       return { ...state, screen: "menu", battle: null };
 
     case "ENTER_WORLDMAP": {
-      // 기존 진행 있으면 복원, 없으면 새로 생성
-      if (state.mapNodes && state.currentNodeId >= 0) {
-        return { ...state, screen: "worldmap" };
-      }
-      const nodes = generateNorthRoute();
-      return { ...state, screen: "worldmap", mapNodes: nodes, currentNodeId: 0 };
+      if (state.mapNodes && state.currentNodeId >= 0) return { ...state, screen: "worldmap" };
+      return { ...state, screen: "worldmap", mapNodes: generateNorthRoute(), currentNodeId: 0 };
     }
 
     case "VISIT_NODE": {
       if (!state.player || !state.mapNodes) return state;
       const node = state.mapNodes.find((n) => n.id === action.nodeId);
       if (!node || node.visited) return state;
-
-      // 현재 노드에서 연결된 노드만 방문 가능
       const current = state.mapNodes.find((n) => n.id === state.currentNodeId);
       if (!current || !current.connections.includes(action.nodeId)) return state;
-
-      // 노드 방문 처리
-      const updatedNodes = state.mapNodes.map((n) =>
-        n.id === action.nodeId ? { ...n, visited: true } : n
-      );
+      const updatedNodes = state.mapNodes.map((n) => n.id === action.nodeId ? { ...n, visited: true } : n);
 
       if (node.type === "combat" || node.type === "boss") {
         const enc = state.encounter + 1;
         const enemy = refreshIntents(createEnemyByTier(node.tier));
         const player = startBattle(state.player, state.innBuff);
-        return {
-          ...state,
-          screen: "battle",
-          player,
-          encounter: enc,
-          mapNodes: updatedNodes,
-          currentNodeId: action.nodeId,
-          battle: {
-            enemy,
-            clashIndex: 0,
-            logs: [{ text: `${enemy.name}이(가) 앞을 막아선다!`, color: "text-red-400" }],
-            playerTurn: true,
-          },
-          lastMessage: "",
-        };
+        return { ...state, screen: "battle", player, encounter: enc, mapNodes: updatedNodes, currentNodeId: action.nodeId,
+          battle: { enemy, clashIndex: 0, logs: [{ text: `${enemy.name}이(가) 앞을 막아선다!`, color: "text-red-400" }], playerTurn: true }, lastMessage: "" };
       }
-
-      if (node.type === "inn") {
-        return { ...state, screen: "inn", mapNodes: updatedNodes, currentNodeId: action.nodeId };
-      }
-
-      if (node.type === "training") {
-        return { ...state, screen: "training", mapNodes: updatedNodes, currentNodeId: action.nodeId };
-      }
-
-      // city: 방문만 처리
+      if (node.type === "inn") return { ...state, screen: "inn", mapNodes: updatedNodes, currentNodeId: action.nodeId };
+      if (node.type === "training") return { ...state, screen: "training", mapNodes: updatedNodes, currentNodeId: action.nodeId };
       return { ...state, mapNodes: updatedNodes, currentNodeId: action.nodeId };
     }
 
-    case "BACK_TO_WORLDMAP": {
-      if (!state.mapNodes) return { ...state, screen: "menu" };
-      return { ...state, screen: "worldmap" };
-    }
+    case "BACK_TO_WORLDMAP":
+      return state.mapNodes ? { ...state, screen: "worldmap" } : { ...state, screen: "menu" };
 
     case "RESURRECT": {
-      const newDeath = state.deathCount + 1;
-      if (typeof window !== "undefined") {
-        const prev = parseInt(localStorage.getItem("guunrok_enlightenment") || "0", 10);
-        localStorage.setItem("guunrok_enlightenment", String(prev + 1));
-        localStorage.setItem("guunrok_deathCount", String(newDeath));
+      // 영구 데이터 업데이트: 스탯 유지, 해금 카드 유지, 사망 횟수 +1
+      const legacy = loadLegacy();
+      // 현재 스탯을 영구에 저장 (이미 UPGRADE_STAT에서 저장되지만 안전장치)
+      if (state.player) {
+        legacy.statsBase = { ...state.player.stats };
+        // 현재 덱에 스타터가 아닌 카드가 있으면 해금 목록에 추가
+        for (const c of state.player.deck) {
+          if (!STARTER_CARD_NAMES.includes(c.name) && !legacy.unlockedCards.includes(c.name)) {
+            legacy.unlockedCards.push(c.name);
+          }
+        }
       }
-      return { ...initialState, deathCount: newDeath };
+      legacy.deathCount += 1;
+      saveLegacy(legacy);
+      // guunrok_save 삭제
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("guunrok_save");
+      }
+      return { ...initialState, legacy };
     }
 
     case "SAVE_GAME": {
@@ -437,37 +424,25 @@ function gameReducer(state: GameState, action: Action): GameState {
 
     case "LOAD_GAME": {
       const d = action.data;
+      const legacy = loadLegacy();
       const player = createPlayer(d.playerName);
+      player.deck = createDeckFromUnlocked(legacy.unlockedCards);
       // mastery 복원
       player.deck = player.deck.map((c) => {
         const saved = d.deckMasteries.find((m) => m.name === c.name);
         return saved ? { ...c, mastery: saved.mastery } : c;
       });
-      // stats 복원
-      if (d.stats) {
-        player.stats = d.stats;
-      }
-      player.xp = d.xp;
-      player.totalXp = d.totalXp;
-      player.gold = d.gold;
-      player.winStreak = d.winStreak;
-      player.hp = d.hp;
-      player.maxHp = d.maxHp;
+      player.stats = d.stats || legacy.statsBase;
+      player.xp = d.xp; player.totalXp = d.totalXp;
+      player.gold = d.gold; player.winStreak = d.winStreak;
+      player.hp = d.hp; player.maxHp = d.maxHp;
       const restoredPlayer = recalculateStats(player);
       return {
-        ...state,
-        screen: "menu",
-        player: restoredPlayer,
-        playerName: d.playerName,
-        encounter: d.encounter,
-        deathCount: d.deathCount,
-        inheritedMastery: d.inheritedMastery,
-        innBuff: d.innBuff,
-        battle: null,
+        ...state, screen: "menu", player: restoredPlayer, playerName: d.playerName,
+        encounter: d.encounter, legacy, innBuff: d.innBuff, battle: null,
         mapNodes: d.regionProgress?.mapNodes ?? null,
         currentNodeId: d.regionProgress?.currentNodeId ?? -1,
-        lastMessage: `${d.playerName}의 기록을 불러왔습니다.`,
-        saveNotice: "",
+        lastMessage: `${d.playerName}의 기록을 불러왔습니다.`, saveNotice: "",
       };
     }
 
@@ -483,7 +458,6 @@ const GameDispatchContext = createContext<Dispatch<Action>>(() => {});
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
-  // 자동 로드
   useEffect(() => {
     try {
       const raw = localStorage.getItem("guunrok_save");
@@ -491,7 +465,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const data: SaveData = JSON.parse(raw);
         dispatch({ type: "LOAD_GAME", data });
       }
-    } catch { /* 저장 데이터 없음 */ }
+    } catch { /* noop */ }
   }, []);
 
   return (
@@ -503,10 +477,5 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useGameState() {
-  return useContext(GameStateContext);
-}
-
-export function useGameDispatch() {
-  return useContext(GameDispatchContext);
-}
+export function useGameState() { return useContext(GameStateContext); }
+export function useGameDispatch() { return useContext(GameDispatchContext); }

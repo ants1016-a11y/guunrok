@@ -39,8 +39,8 @@ export default function TitlePage() {
     );
   }
 
-  const deathCount = state.deathCount;
-  const inheritedMastery = state.inheritedMastery || parseInt(localStorage.getItem("guunrok_enlightenment") || "0", 10);
+  const deathCount = state.legacy.deathCount;
+  const hasLegacy = deathCount > 0;
 
   const handleStart = () => {
     const finalName = name.trim() || "회귀한 둔재";
@@ -83,10 +83,10 @@ export default function TitlePage() {
         />
       </div>
 
-      {inheritedMastery > 0 && (
+      {hasLegacy && (
         <div className="text-center mb-6 px-4 py-2 bg-purple-950/40 border border-purple-700/50 rounded-lg">
           <p className="text-purple-300 text-sm italic">영혼에 새겨진 검로는 기억한다.</p>
-          <p className="text-purple-400 text-xs mt-1">{`기본 무공 성취도 +${inheritedMastery} 계승`}</p>
+          <p className="text-purple-400 text-xs mt-1">기초 스탯과 해금 무공이 이어집니다.</p>
         </div>
       )}
 

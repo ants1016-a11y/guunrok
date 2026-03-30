@@ -302,6 +302,8 @@ export const BASIC_ACTIONS: Card[] = [
   },
 ];
 
+export const STARTER_CARD_NAMES = ["복호장", "육합권", "포천삼", "삼재공", "유운지"];
+
 export function createCard(name: string): Card {
   const def = CARD_DEFS[name];
   if (!def) throw new Error(`Unknown card: ${name}`);
@@ -313,10 +315,27 @@ export function createCard(name: string): Card {
     description: def.desc,
     baseValue: def.baseValue,
     mastery: 1,
-    masteryMax: 5,
+    masteryMax: 12,
   };
 }
 
 export function createStarterDeck(): Card[] {
-  return ["복호장", "육합권", "포천삼", "삼재공", "유운지"].map(createCard);
+  return STARTER_CARD_NAMES.map(createCard);
+}
+
+/** 해금된 카드 목록에서 덱 5장 생성 (mastery 1성으로 리셋) */
+export function createDeckFromUnlocked(unlockedNames: string[]): Card[] {
+  // 스타터 5장 + 해금된 추가 카드 → 최대 5장
+  const names = [...STARTER_CARD_NAMES];
+  for (const n of unlockedNames) {
+    if (!names.includes(n) && CARD_DEFS[n]) names.push(n);
+  }
+  // 덱은 5장 고정 — 스타터 우선, 해금 카드가 있으면 뒤에서부터 교체
+  const deckNames = names.slice(0, 5);
+  return deckNames.map(createCard);
+}
+
+/** 모든 해금 가능한 카드 이름 목록 (스타터 제외) */
+export function getAllUnlockableCardNames(): string[] {
+  return Object.keys(CARD_DEFS).filter((n) => !STARTER_CARD_NAMES.includes(n));
 }
