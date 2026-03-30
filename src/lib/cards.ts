@@ -1,4 +1,5 @@
 import { Card, CardType, Player, Enemy, getCurrentValue } from "./types";
+import { calcCardPower } from "./formulas";
 
 // ─── 카드 효과 함수 ─────────────────────────────────────────
 type EffectFn = (
@@ -70,12 +71,12 @@ const effects: Record<string, EffectFn> = {
     };
   },
   육합권: (p, e, card) => {
-    const dmg = getCurrentValue(card) + p.attackPowerBonus;
+    const dmg = calcCardPower(card, p.stats);
     const [ne, actual] = applyDamageToEnemy(e, dmg);
     return { player: p, enemy: ne, message: `육합권: ${actual}의 피해!` };
   },
   포천삼: (p, e, card) => {
-    const base = getCurrentValue(card);
+    const base = calcCardPower(card, p.stats);
     const defense = base + Math.floor(Math.random() * 5);
     const np = { ...p, defense: p.defense + defense };
     return {
@@ -85,7 +86,7 @@ const effects: Record<string, EffectFn> = {
     };
   },
   복호장: (p, e, card) => {
-    const dmg = getCurrentValue(card) + p.attackPowerBonus;
+    const dmg = calcCardPower(card, p.stats);
     const [ne, actual] = applyDamageToEnemy(e, dmg);
     return {
       player: p,
@@ -94,7 +95,7 @@ const effects: Record<string, EffectFn> = {
     };
   },
   유운지: (p, e, card) => {
-    const debuff = getCurrentValue(card);
+    const debuff = calcCardPower(card, p.stats);
     const ne = { ...e, atk: Math.max(1, e.atk - debuff) };
     return {
       player: p,
@@ -105,9 +106,7 @@ const effects: Record<string, EffectFn> = {
 
   // 고급 무공
   용호권: (p, e, card) => {
-    const hit = Math.floor(
-      (getCurrentValue(card) + p.attackPowerBonus) * 0.6
-    );
+    const hit = Math.floor(calcCardPower(card, p.stats) * 0.6);
     const [e1, a1] = applyDamageToEnemy(e, hit);
     const [e2, a2] = applyDamageToEnemy(e1, hit);
     return {
@@ -117,8 +116,8 @@ const effects: Record<string, EffectFn> = {
     };
   },
   철사장: (p, e, card) => {
-    const defGain = getCurrentValue(card);
-    const strip = Math.floor(getCurrentValue(card) * 0.5);
+    const defGain = calcCardPower(card, p.stats);
+    const strip = Math.floor(defGain * 0.5);
     const np = { ...p, defense: p.defense + defGain };
     const ne = { ...e, defense: Math.max(0, e.defense - strip) };
     return {
@@ -128,13 +127,13 @@ const effects: Record<string, EffectFn> = {
     };
   },
   내가일소: (p, e, card) => {
-    const heal = getCurrentValue(card);
+    const heal = calcCardPower(card, p.stats);
     const actual = Math.min(heal, p.maxHp - p.hp);
     const np = { ...p, hp: Math.min(p.maxHp, p.hp + heal) };
     return { player: np, enemy: e, message: `내가일소: 기혈 ${actual} 회복` };
   },
   점혈타: (p, e, card) => {
-    const debuff = getCurrentValue(card);
+    const debuff = calcCardPower(card, p.stats);
     const ne = { ...e, atk: Math.max(1, e.atk - debuff), defense: 0 };
     return {
       player: p,
@@ -143,7 +142,7 @@ const effects: Record<string, EffectFn> = {
     };
   },
   비연보: (p, e, card) => {
-    const defGain = getCurrentValue(card);
+    const defGain = calcCardPower(card, p.stats);
     const np = {
       ...p,
       energy: Math.min(p.maxEnergy, p.energy + 2),
@@ -160,7 +159,7 @@ const effects: Record<string, EffectFn> = {
   녹림패도법: (p, e, card) => {
     const shatter = Math.min(e.defense, 15);
     const ne1 = { ...e, defense: Math.max(0, e.defense - 15) };
-    const dmg = getCurrentValue(card) + p.attackPowerBonus;
+    const dmg = calcCardPower(card, p.stats);
     const [ne2, actual] = applyDamageToEnemy(ne1, dmg);
     return {
       player: p,
@@ -172,7 +171,7 @@ const effects: Record<string, EffectFn> = {
     };
   },
   천근추: (p, e, card) => {
-    const defVal = getCurrentValue(card) + Math.floor(e.atk / 2);
+    const defVal = calcCardPower(card, p.stats) + Math.floor(e.atk / 2);
     const np = { ...p, defense: p.defense + defVal };
     return {
       player: np,
@@ -181,9 +180,7 @@ const effects: Record<string, EffectFn> = {
     };
   },
   산악붕: (p, e, card) => {
-    const hit = Math.floor(
-      (getCurrentValue(card) + p.attackPowerBonus) / 2
-    );
+    const hit = Math.floor(calcCardPower(card, p.stats) / 2);
     const [e1, a1] = applyDamageToEnemy(e, hit);
     const [e2, a2] = applyDamageToEnemy(e1, hit);
     return {

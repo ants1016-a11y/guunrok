@@ -208,8 +208,9 @@ function processClash(state: GameState, card: Card, isFromHand: boolean, isCrit:
     fe = refreshIntents(fe);
     fp = startTurnRegen(fp);
     fp = drawCards(fp, Math.max(0, 5 - fp.hand.length));
-    let newDef = 0;
-    if (state.innBuff?.type === "defense") newDef = state.innBuff.val;
+    // 합 시작: 방어도 = calcDef(stats) 기반 + 용정차 버프
+    let newDef = fp.baseDefense;
+    if (state.innBuff?.type === "defense") newDef += state.innBuff.val;
     fp = { ...fp, defense: newDef };
     fe = { ...fe, defense: 0 };
     logs.push({ text: "─── 새로운 합이 시작된다 ───", color: "text-cyan-400" });

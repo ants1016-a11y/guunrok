@@ -10,10 +10,10 @@ const CARD_UPGRADE_BASE = 100;
 const CARD_MASTERY_MAX = 12;
 
 const STAT_INFO: { key: string; label: string; desc: string }[] = [
-  { key: "근골", label: "근골", desc: "기본 방어도 상승" },
-  { key: "심법", label: "심법", desc: "시작 내공(에너지) +1" },
-  { key: "외공", label: "외공", desc: "공격 카드 위력 계수 상승" },
-  { key: "자질", label: "자질", desc: "명성 획득량 보정" },
+  { key: "근골", label: "근골", desc: "최대 기혈 · 방어 시작치 · 회복의 바닥" },
+  { key: "심법", label: "심법", desc: "최대 내공 · 내공 기반 무공 위력" },
+  { key: "외공", label: "외공", desc: "공격력 · 물리 무공 스케일링" },
+  { key: "자질", label: "자질", desc: "명성 획득량 보정 · 연마 효율" },
 ];
 
 export default function TrainingPage() {
