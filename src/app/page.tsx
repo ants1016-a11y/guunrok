@@ -33,7 +33,7 @@ export default function TitlePage() {
       <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center text-white">
         <div className="text-center">
           <div className="text-6xl mb-4">{"⚔️"}</div>
-          <p className="text-gray-500 text-sm animate-pulse">불러오는 중...</p>
+          <p className="text-gray-400 text-sm animate-pulse">불러오는 중...</p>
         </div>
       </div>
     );
@@ -62,7 +62,7 @@ export default function TitlePage() {
         {deathCount > 0 ? (
           <>
             <p className="italic">같은 산길이 또다시 펼쳐졌다.</p>
-            <p className="text-gray-400 mt-1">{`(${deathCount}번째 되풀이)`}</p>
+            <p className="text-gray-300 mt-1">{`(${deathCount}번째 되풀이)`}</p>
           </>
         ) : (
           <>
@@ -95,7 +95,7 @@ export default function TitlePage() {
       </button>
 
       {/* 태그라인 — 모바일에선 한 줄 */}
-      <div className="mt-4 text-center text-[11px] text-gray-400">
+      <div className="mt-4 text-center text-[11px] text-gray-300">
         턴제 카드 비무 · 5합 1턴
       </div>
     </div>

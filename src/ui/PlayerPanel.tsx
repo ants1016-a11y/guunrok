@@ -78,7 +78,7 @@ export default function PlayerPanel({ player, compact }: Props) {
       <div className="grid grid-cols-3 gap-1 mt-3 text-[13px] text-gray-300">
         {Object.entries(player.stats).map(([key, val]) => (
           <div key={key} className="text-center">
-            <span className="text-gray-400">{key}</span>{" "}
+            <span className="text-gray-300">{key}</span>{" "}
             <span className="text-white font-semibold">{val}</span>
           </div>
         ))}

@@ -38,7 +38,7 @@ export default function InnPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-green-950/10 to-gray-950 text-white">
       <div className="text-center py-6 bg-gray-900/80 border-b border-gray-700">
         <h1 className="text-2xl font-bold text-amber-400">🏮 객잔</h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-gray-300 mt-1">
           기혈 {player.hp}/{player.maxHp} | 금자 {player.gold}
           {innBuff && <span className="text-emerald-400 ml-2">식사: {innBuff.name}</span>}
         </p>
@@ -56,7 +56,7 @@ export default function InnPage() {
                   className={`p-4 rounded-lg border text-center transition-colors ${canBuy ? "bg-gray-800 border-amber-700/50 hover:bg-gray-700 cursor-pointer" : "bg-gray-900 border-gray-800 opacity-40 cursor-not-allowed"}`}>
                   <div className="text-sm font-bold text-white">{menu.label}</div>
                   <div className="text-xs text-amber-400 mt-1">{menu.cost}냥</div>
-                  {player.hp >= player.maxHp && <div className="text-xs text-gray-500 mt-1">기혈 충만</div>}
+                  {player.hp >= player.maxHp && <div className="text-xs text-gray-400 mt-1">기혈 충만</div>}
                 </button>
               );
             })}
@@ -65,7 +65,7 @@ export default function InnPage() {
 
         <div className="bg-gray-900/60 rounded-xl border border-gray-700 p-5">
           <h2 className="text-lg font-bold text-emerald-300 mb-2">식사 및 반주</h2>
-          <p className="text-xs text-gray-500 mb-4">
+          <p className="text-xs text-gray-400 mb-4">
             {innBuff ? `이미 ${innBuff.name}을(를) 먹었습니다. (다음 전투에 적용)` : "하나를 골라 다음 전투에 대비합니다."}
           </p>
           <div className="flex flex-col gap-3">
@@ -77,7 +77,7 @@ export default function InnPage() {
                   className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${canEat ? "bg-gray-800 border-emerald-700/50 hover:bg-gray-700 cursor-pointer" : "bg-gray-900 border-gray-800 opacity-40 cursor-not-allowed"}`}>
                   <div className="text-left">
                     <div className="text-sm font-bold text-white">{food.name}</div>
-                    <div className="text-xs text-gray-400">{food.desc}</div>
+                    <div className="text-xs text-gray-300">{food.desc}</div>
                   </div>
                   <div className="text-sm text-amber-400 font-bold">{food.cost}냥</div>
                 </button>

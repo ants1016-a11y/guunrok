@@ -82,7 +82,7 @@ export default function WorldPage() {
 
           {/* 다음 조우 */}
           <div className={`text-center p-2 rounded-lg border mb-3 ${isBoss ? "bg-red-950/40 border-red-700" : isMid ? "bg-orange-950/40 border-orange-700" : "bg-gray-800/40 border-gray-600"}`}>
-            <div className="text-[11px] text-gray-400">다음 조우 #{nextEncounter}</div>
+            <div className="text-[11px] text-gray-300">다음 조우 #{nextEncounter}</div>
             <div className={`text-base font-bold leading-tight ${isBoss ? "text-red-400" : isMid ? "text-orange-400" : "text-gray-200"}`}>
               {isBoss ? "👹 " : isMid ? "⚔️ " : "🥷 "}{nextEnemyPreview}
             </div>
@@ -121,7 +121,7 @@ export default function WorldPage() {
             {player.deck.map((card, i) => (
               <div key={i} className="flex items-center justify-between bg-gray-800/60 rounded px-2 py-1.5 text-[12px]">
                 <span className="text-white truncate">{card.name}</span>
-                <span className="text-[11px] text-gray-400 shrink-0 ml-1">
+                <span className="text-[11px] text-gray-300 shrink-0 ml-1">
                   {card.cost}·{"★".repeat(card.mastery)}
                 </span>
               </div>

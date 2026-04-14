@@ -389,3 +389,25 @@ export const INTENT_DISPLAY: Record<string, { icon: string; color: string }> = {
   혈천만상: { icon: "🌊", color: "text-red-800" },
   흡혈: { icon: "🧛", color: "text-purple-700" },
 };
+
+// 예상 데미지 추정 — UI 표시용 (랜덤 변동은 평균치로)
+// executeEnemyIntent 의 데미지 공식과 동기화. null = 비공격(버프/디버프)
+export function estimateIntentDamage(intent: string, atk: number): number | null {
+  switch (intent) {
+    case "공격": return atk;                       // atk + randInt(-1, 2) → 평균
+    case "강공": return Math.floor(atk * 1.5);
+    case "주먹질": return atk;
+    case "돌팔매": return Math.max(1, atk - 2);
+    case "난도질": return atk + 4;
+    case "멱살잡이": return Math.max(1, Math.floor(atk / 2));
+    case "살웅 괴력권": return atk + 8;
+    case "황산 대참": return Math.floor(atk * 1.6);
+    case "녹림 파천참": return atk * 3;
+    case "독침": return Math.floor(atk * 0.6);
+    case "혈공": return Math.floor(atk * 1.4);
+    case "혈마강타": return atk + 10;
+    case "혈천만상": return atk * 2;
+    case "흡혈": return Math.floor(atk * 0.8);
+    default: return null;
+  }
+}

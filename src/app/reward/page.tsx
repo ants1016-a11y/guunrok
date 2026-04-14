@@ -29,20 +29,20 @@ export default function RewardPage() {
         <div className="bg-gray-900/80 rounded-xl border border-amber-700/50 p-8 text-center">
           <div className="text-5xl mb-4">🏆</div>
           <h1 className="text-2xl font-bold text-yellow-400 mb-2">비무 승리!</h1>
-          <p className="text-gray-400 mb-6">{battle.enemy.name}을(를) 쓰러뜨렸다.</p>
+          <p className="text-gray-300 mb-6">{battle.enemy.name}을(를) 쓰러뜨렸다.</p>
 
           <div className="bg-gray-800/60 rounded-lg border border-gray-700 p-4 mb-6">
             <div className="flex justify-center gap-8 text-lg">
               <div>
-                <span className="text-gray-400 text-sm">명성</span>
+                <span className="text-gray-300 text-sm">명성</span>
                 <p className="text-amber-300 font-bold">+{lastRewards.xp}</p>
               </div>
               <div>
-                <span className="text-gray-400 text-sm">금자</span>
+                <span className="text-gray-300 text-sm">금자</span>
                 <p className="text-yellow-400 font-bold">+{lastRewards.gold}</p>
               </div>
               <div>
-                <span className="text-gray-400 text-sm">연승</span>
+                <span className="text-gray-300 text-sm">연승</span>
                 <p className="text-orange-400 font-bold">{lastRewards.streak}</p>
               </div>
             </div>
@@ -51,7 +51,7 @@ export default function RewardPage() {
             )}
           </div>
 
-          <div className="text-xs text-gray-500 mb-6 space-y-1">
+          <div className="text-xs text-gray-400 mb-6 space-y-1">
             <p>기혈 {player.hp}/{player.maxHp} | 금자 {player.gold} | 명성 {player.xp}</p>
             <p>제 {encounter}차 조우 완료</p>
           </div>

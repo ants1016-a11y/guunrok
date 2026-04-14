@@ -99,12 +99,12 @@ export default function WorldMapPage() {
                     disabled={!isReachable}
                     onClick={() => dispatch({ type: "VISIT_NODE", nodeId: node.id })}
                     className={`
-                      relative w-11 h-11 sm:w-16 sm:h-16 rounded-lg border-2 flex flex-col items-center justify-center
+                      relative w-11 h-11 sm:w-16 sm:h-16 rounded-lg flex flex-col items-center justify-center
                       transition-all duration-200
                       ${colorClass}
-                      ${isCurrent ? "ring-2 ring-amber-400 scale-110" : ""}
-                      ${isReachable ? "hover:scale-110 cursor-pointer animate-pulse" : ""}
-                      ${node.visited && !isCurrent ? "opacity-50" : ""}
+                      ${isCurrent ? "border-4 border-amber-400 scale-110 shadow-lg shadow-amber-500/40" : "border-2"}
+                      ${isReachable && !isCurrent ? "border-green-400 ring-2 ring-green-400/50 hover:scale-110 cursor-pointer animate-pulse" : ""}
+                      ${node.visited && !isCurrent ? "opacity-50 border-dashed" : ""}
                       ${!isReachable && !node.visited && !isCurrent ? "opacity-30" : ""}
                     `}
                     title={node.label}
@@ -113,6 +113,17 @@ export default function WorldMapPage() {
                     <span className="text-[10px] sm:text-[11px] text-gray-200 leading-tight mt-0.5 max-w-full truncate px-0.5">{node.label}</span>
                     {isCurrent && (
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full" />
+                    )}
+                    {/* 색약 대응: 도달 가능 표시 아이콘 (현재 위치/방문 제외) */}
+                    {isReachable && !isCurrent && !node.visited && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border border-gray-900 flex items-center justify-center text-[10px] font-bold text-white leading-none">
+                        →
+                      </div>
+                    )}
+                    {node.visited && !isCurrent && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-gray-600 border border-gray-900 flex items-center justify-center text-[10px] font-bold text-white leading-none">
+                        ✓
+                      </div>
                     )}
                   </button>
                 </div>

@@ -37,7 +37,7 @@ function DeathScreen({ playerName, encounter, deathCount, enemyName, lastUsedCar
           <div className="space-y-3 text-sm text-gray-200 italic leading-relaxed mb-6">
             {deathNovel.map((line, i) => <p key={i}>{line}</p>)}
           </div>
-          <div className="text-[13px] text-gray-400 mb-6 space-y-1 text-center">
+          <div className="text-[13px] text-gray-300 mb-6 space-y-1 text-center">
             <p>{`${encounter}차 조우에서 쓰러짐`}</p>
             <p>{`마지막 초식: ${lastUsedCard || "알 수 없음"}`}</p>
           </div>

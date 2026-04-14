@@ -37,7 +37,7 @@ export default function TrainingPage() {
       {/* 헤더 */}
       <div className="text-center py-6 bg-gray-900/80 border-b border-gray-700">
         <h1 className="text-2xl font-bold text-indigo-400">⚔️ 연무장</h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-gray-300 mt-1">
           {player.name} | 기혈 {player.hp}/{player.maxHp} | 금자 {player.gold} | 명성 {player.xp}
         </p>
       </div>
@@ -61,7 +61,7 @@ export default function TrainingPage() {
                       <span className="text-amber-400 font-mono text-lg">{val}</span>
                       {atMax && <span className="text-xs text-emerald-400">(극)</span>}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">{desc}</p>
+                    <p className="text-xs text-gray-400 mt-1">{desc}</p>
                   </div>
                   <button
                     disabled={!canUpgrade}
@@ -99,10 +99,10 @@ export default function TrainingPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-white font-bold">{card.name}</span>
-                      <span className="text-xs text-gray-500">[{card.type}]</span>
+                      <span className="text-xs text-gray-400">[{card.type}]</span>
                     </div>
                     <div className="text-xs text-amber-400 mt-1">{stars}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
+                    <div className="text-xs text-gray-400 mt-0.5">
                       위력 {curVal} | 내공 {card.cost} | {card.description}
                     </div>
                   </div>

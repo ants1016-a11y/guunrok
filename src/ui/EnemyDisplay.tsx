@@ -1,7 +1,7 @@
 "use client";
 
 import { Enemy } from "@/lib/types";
-import { INTENT_DISPLAY } from "@/lib/enemies";
+import { INTENT_DISPLAY, estimateIntentDamage } from "@/lib/enemies";
 import HealthBar from "./HealthBar";
 
 interface Props {
@@ -26,6 +26,10 @@ export default function EnemyDisplay({ enemy, compact }: Props) {
   };
   const emoji = enemyEmoji[enemy.type] || "👤";
 
+  // 예상 데미지 (null = 비공격)
+  const estDmg = currentIntent ? estimateIntentDamage(currentIntent, enemy.atk) : null;
+  const isAttack = estDmg !== null;
+
   // ── compact: 전투 화면용 가로 레이아웃 ────────────
   if (compact) {
     return (
@@ -35,7 +39,7 @@ export default function EnemyDisplay({ enemy, compact }: Props) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-base font-bold text-red-300 truncate">{enemy.name}</h2>
-              <span className="text-[11px] text-gray-300 shrink-0">Lv.{enemy.level}</span>
+              <span className="text-[11px] text-gray-200 shrink-0">Lv.{enemy.level}</span>
             </div>
             <div className="mt-1">
               <HealthBar
@@ -46,13 +50,24 @@ export default function EnemyDisplay({ enemy, compact }: Props) {
                 showDefense={enemy.defense}
               />
             </div>
-            {/* 다음 의도 — 큰 강조 */}
+            {/* 다음 의도 — 강조 박스 (공격은 빨강 펄스, 비공격은 파랑) */}
             {intentInfo && currentIntent && (
               <div
-                className={`mt-1.5 flex items-center gap-1.5 text-[13px] ${intentInfo.color}`}
+                className={`mt-1.5 flex items-center justify-between gap-2 rounded-md px-2 py-1 border ${
+                  isAttack
+                    ? "bg-red-950/60 border-red-600 animate-pulse"
+                    : "bg-blue-950/50 border-blue-700"
+                }`}
               >
-                <span className="text-lg">{intentInfo.icon}</span>
-                <span className="font-bold">다음 수: {currentIntent}</span>
+                <div className={`flex items-center gap-1.5 ${intentInfo.color} min-w-0`}>
+                  <span className="text-2xl leading-none shrink-0">{intentInfo.icon}</span>
+                  <span className="text-sm font-bold truncate">{currentIntent}</span>
+                </div>
+                {isAttack && (
+                  <span className="text-base font-extrabold text-red-300 shrink-0 tabular-nums">
+                    −{estDmg}
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -75,7 +90,7 @@ export default function EnemyDisplay({ enemy, compact }: Props) {
             {enemy.intentQueue.length > 1 && (
               <div className="flex gap-1">
                 {enemy.intentQueue.slice(0, 5).map((intent, i) => {
-                  const info = INTENT_DISPLAY[intent] || { icon: "❓", color: "text-gray-400" };
+                  const info = INTENT_DISPLAY[intent] || { icon: "❓", color: "text-gray-300" };
                   return (
                     <div
                       key={i}
@@ -102,7 +117,7 @@ export default function EnemyDisplay({ enemy, compact }: Props) {
       <div className="text-center">
         <div className="text-5xl mb-2">{emoji}</div>
         <h2 className="text-xl font-bold text-red-400">{enemy.name}</h2>
-        <div className="text-xs text-gray-400">Lv.{enemy.level}</div>
+        <div className="text-xs text-gray-300">Lv.{enemy.level}</div>
       </div>
 
       <div className="flex gap-2">
@@ -129,7 +144,7 @@ export default function EnemyDisplay({ enemy, compact }: Props) {
 
       <div className="flex gap-1">
         {enemy.intentQueue.map((intent, i) => {
-          const info = INTENT_DISPLAY[intent] || { icon: "❓", color: "text-gray-400" };
+          const info = INTENT_DISPLAY[intent] || { icon: "❓", color: "text-gray-300" };
           return (
             <div
               key={i}
