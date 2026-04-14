@@ -21,9 +21,10 @@ interface Props {
   onClick: () => void;
   disabled?: boolean;
   isBasic?: boolean;
+  isSelected?: boolean; // 1차 탭(선택) 시각 표시 — battle 페이지에서 관리
 }
 
-export default function CardButton({ card, onClick, disabled, isBasic }: Props) {
+export default function CardButton({ card, onClick, disabled, isBasic, isSelected }: Props) {
   const colors = TYPE_COLORS[card.type] || TYPE_COLORS["공격"];
   const icon = TYPE_ICONS[card.type] || "🃏";
   const value = getCurrentValue(card);
@@ -33,22 +34,30 @@ export default function CardButton({ card, onClick, disabled, isBasic }: Props) 
       onClick={onClick}
       disabled={disabled}
       className={`
-        relative w-36 h-48 rounded-lg border-2 bg-gradient-to-b ${colors}
-        flex flex-col items-center justify-between p-3
+        relative rounded-lg border-2 bg-gradient-to-b ${colors}
+        flex flex-col items-center justify-between p-2
         transition-all duration-200 transform
+        ${isBasic ? "w-24 h-32 sm:w-28 sm:h-36" : "w-28 h-40 sm:w-36 sm:h-48"}
         ${disabled ? "opacity-40 cursor-not-allowed scale-95" : "hover:scale-105 hover:-translate-y-1 cursor-pointer active:scale-95"}
-        ${isBasic ? "w-28 h-36" : ""}
+        ${isSelected ? "ring-4 ring-amber-300 ring-offset-2 ring-offset-gray-950 -translate-y-2 scale-105" : ""}
       `}
     >
       {/* 비용 */}
-      <div className="absolute top-1 left-2 w-7 h-7 rounded-full bg-yellow-700 border border-yellow-500 flex items-center justify-center text-sm font-bold text-yellow-200">
+      <div className="absolute top-1 left-1 w-7 h-7 rounded-full bg-yellow-700 border border-yellow-500 flex items-center justify-center text-sm font-bold text-yellow-200">
         {card.cost}
       </div>
 
       {/* 숙련도 */}
       {!isBasic && card.mastery > 1 && (
-        <div className="absolute top-1 right-2 text-xs text-yellow-400">
+        <div className="absolute top-1 right-1 text-[11px] text-yellow-400">
           {"★".repeat(card.mastery)}
+        </div>
+      )}
+
+      {/* 선택됨 뱃지 */}
+      {isSelected && (
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-400 text-[11px] font-bold text-gray-900 shadow">
+          탭하여 사용
         </div>
       )}
 
@@ -57,14 +66,14 @@ export default function CardButton({ card, onClick, disabled, isBasic }: Props) 
 
       {/* 이름 */}
       <div className="text-center">
-        <div className="text-sm font-bold text-white">{card.name}</div>
+        <div className="text-sm font-bold text-white leading-tight">{card.name}</div>
         {value > 0 && (
-          <div className="text-xs text-gray-300 mt-0.5">위력 {value}</div>
+          <div className="text-xs text-gray-200 mt-0.5">위력 {value}</div>
         )}
       </div>
 
       {/* 설명 */}
-      <div className="text-[10px] text-gray-400 text-center leading-tight">
+      <div className="text-[11px] text-gray-300 text-center leading-snug">
         {card.description}
       </div>
     </button>

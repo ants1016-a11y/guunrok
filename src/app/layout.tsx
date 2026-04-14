@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "@/state/game";
@@ -16,6 +16,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "구운록 — 회귀한 둔재의 강호",
   description: "무협 턴제 카드 배틀 웹 게임",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

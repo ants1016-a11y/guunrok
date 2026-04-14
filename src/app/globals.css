@@ -19,8 +19,26 @@
   }
 }
 
+html, body {
+  min-height: 100dvh;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* iOS Safe Area */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
+
+/* iOS 입력 auto-zoom 방지: 16px 미만 font 에서도 줌 금지 */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: 16px; }
+}
+
+/* 모바일 본문 최소 폰트 확보 (자잘한 text-[9px]/text-[10px] 구제) */
+.text-\[9px\]  { font-size: 11px !important; }
+.text-\[10px\] { font-size: 12px !important; }

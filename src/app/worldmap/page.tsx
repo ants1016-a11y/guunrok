@@ -34,17 +34,20 @@ export default function WorldMapPage() {
   const rows = 3;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-stone-950/30 to-gray-950 text-white">
-      <div className="text-center py-4 bg-gray-900/80 border-b border-gray-700">
+    <div className="min-h-dvh bg-gradient-to-b from-gray-950 via-stone-950/30 to-gray-950 text-white">
+      <div
+        className="text-center py-4 bg-gray-900/80 border-b border-gray-700"
+        style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+      >
         <h1 className="text-xl font-bold text-amber-400">녹림 루트 — 북쪽 강호</h1>
-        <p className="text-xs text-gray-500 mt-1">
-          기혈 {player.hp}/{player.maxHp} | 금자 {player.gold} | 명성 {player.xp}
+        <p className="text-[13px] text-gray-300 mt-1">
+          기혈 {player.hp}/{player.maxHp} · 금자 {player.gold} · 명성 {player.xp}
         </p>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* 노드맵 그리드 */}
-        <div className="relative bg-gray-900/40 rounded-xl border border-gray-800 p-6 mb-6 overflow-x-auto">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {/* 노드맵 그리드 — 모바일 축소 노드(48px)+gap-2, sm+ 기존 크기 */}
+        <div className="relative bg-gray-900/40 rounded-xl border border-gray-800 p-3 sm:p-6 mb-6">
           {/* 연결선 (SVG) */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
             {mapNodes.map((node) =>
@@ -72,11 +75,10 @@ export default function WorldMapPage() {
 
           {/* 노드 그리드 */}
           <div
-            className="relative grid gap-4"
+            className="relative grid gap-2 sm:gap-4"
             style={{
               gridTemplateColumns: `repeat(${cols}, 1fr)`,
-              gridTemplateRows: `repeat(${rows}, 80px)`,
-              minHeight: "280px",
+              gridAutoRows: "minmax(64px, auto)",
             }}
           >
             {/* 빈 셀 채우기 */}
@@ -97,7 +99,7 @@ export default function WorldMapPage() {
                     disabled={!isReachable}
                     onClick={() => dispatch({ type: "VISIT_NODE", nodeId: node.id })}
                     className={`
-                      relative w-16 h-16 rounded-lg border-2 flex flex-col items-center justify-center
+                      relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg border-2 flex flex-col items-center justify-center
                       transition-all duration-200
                       ${colorClass}
                       ${isCurrent ? "ring-2 ring-amber-400 scale-110" : ""}
@@ -105,9 +107,10 @@ export default function WorldMapPage() {
                       ${node.visited && !isCurrent ? "opacity-50" : ""}
                       ${!isReachable && !node.visited && !isCurrent ? "opacity-30" : ""}
                     `}
+                    title={node.label}
                   >
-                    <span className="text-lg">{node.icon}</span>
-                    <span className="text-[9px] text-gray-300 leading-tight mt-0.5">{node.label}</span>
+                    <span className="text-base sm:text-lg leading-none">{node.icon}</span>
+                    <span className="text-[11px] text-gray-200 leading-tight mt-0.5 max-w-[56px] truncate">{node.label}</span>
                     {isCurrent && (
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full" />
                     )}
@@ -119,7 +122,7 @@ export default function WorldMapPage() {
         </div>
 
         {/* 범례 */}
-        <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-500 mb-6">
+        <div className="flex flex-wrap justify-center gap-3 text-[13px] text-gray-300 mb-6">
           <span>⚔️ 전투</span>
           <span>🍵 객잔</span>
           <span>⛩️ 연무장</span>
