@@ -40,87 +40,94 @@ export default function WorldPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-green-950/20 to-gray-950 text-white">
-      <div className="text-center py-6 bg-gray-900/80 border-b border-gray-700">
-        <h1 className="text-2xl font-bold text-amber-400">{chapter.name}</h1>
-        <p className="text-sm text-gray-400 mt-1">{chapter.desc}</p>
+    <div className="min-h-dvh bg-gradient-to-b from-gray-950 via-green-950/20 to-gray-950 text-white">
+      <div
+        className="relative text-center py-3 bg-gray-900/80 border-b border-gray-700"
+        style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+      >
+        <h1 className="text-lg sm:text-2xl font-bold text-amber-400 leading-tight">{chapter.name}</h1>
+        <p className="text-xs sm:text-sm text-gray-300 mt-0.5 line-clamp-1">{chapter.desc}</p>
+        {/* 저장 버튼 헤더 우측 고정 */}
+        <button
+          onClick={() => dispatch({ type: "SAVE_GAME" })}
+          className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-[11px] bg-gray-700 hover:bg-gray-600 rounded text-gray-200"
+        >
+          💾 저장
+        </button>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-6">
-        <div className="flex justify-center">
-          <PlayerPanel player={player} />
-        </div>
+      <div className="max-w-2xl mx-auto px-3 py-3 flex flex-col gap-3">
+        <PlayerPanel player={player} compact />
 
-        {/* 알림 메시지 */}
+        {/* 알림 + 버프 (한 줄 축약) */}
         {(lastMessage || saveNotice) && (
-          <div className="text-center text-amber-400 text-sm">{saveNotice || lastMessage}</div>
+          <div className="text-center text-amber-300 text-[13px] leading-snug">{saveNotice || lastMessage}</div>
         )}
-
-        {/* 객잔 버프 표시 */}
         {innBuff && (
-          <div className="text-center text-emerald-400 text-xs bg-emerald-950/30 border border-emerald-800/50 rounded-lg py-2">
-            식사 버프: {innBuff.name} ({innBuff.type === "energy" ? `내공 +${innBuff.val}` : innBuff.type === "maxHp" ? `최대HP +${innBuff.val}` : `방어 +${innBuff.val}`})
+          <div className="text-center text-emerald-300 text-[12px] bg-emerald-950/30 border border-emerald-800/50 rounded-lg py-1">
+            🍽️ {innBuff.name} ({innBuff.type === "energy" ? `내공 +${innBuff.val}` : innBuff.type === "maxHp" ? `최대HP +${innBuff.val}` : `방어 +${innBuff.val}`})
           </div>
         )}
 
-        <div className="bg-gray-900/60 rounded-xl border border-gray-700 p-6">
-          <h2 className="text-lg font-bold text-gray-300 mb-4 text-center">강호의 길</h2>
-
-          <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
+        <div className="bg-gray-900/60 rounded-xl border border-gray-700 p-3">
+          {/* 진행 정보 한 줄 */}
+          <div className="flex items-center justify-between text-[12px] text-gray-300 mb-1.5">
             <span>조우 {encounter}차 완료</span>
             <span>연승 {player.winStreak}</span>
           </div>
-
-          <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden mb-6">
+          <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden mb-3">
             <div className="h-full bg-amber-600 rounded-full transition-all duration-500"
               style={{ width: `${Math.min(100, ((encounter - chapter.range[0] + 1) / (chapter.range[1] - chapter.range[0] + 1)) * 100)}%` }} />
           </div>
 
-          <div className={`text-center p-4 rounded-lg border ${isBoss ? "bg-red-950/40 border-red-700" : isMid ? "bg-orange-950/40 border-orange-700" : "bg-gray-800/40 border-gray-600"}`}>
-            <div className="text-xs text-gray-500 mb-1">다음 조우 #{nextEncounter}</div>
-            <div className={`text-lg font-bold ${isBoss ? "text-red-400" : isMid ? "text-orange-400" : "text-gray-300"}`}>
+          {/* 다음 조우 */}
+          <div className={`text-center p-2 rounded-lg border mb-3 ${isBoss ? "bg-red-950/40 border-red-700" : isMid ? "bg-orange-950/40 border-orange-700" : "bg-gray-800/40 border-gray-600"}`}>
+            <div className="text-[11px] text-gray-400">다음 조우 #{nextEncounter}</div>
+            <div className={`text-base font-bold leading-tight ${isBoss ? "text-red-400" : isMid ? "text-orange-400" : "text-gray-200"}`}>
               {isBoss ? "👹 " : isMid ? "⚔️ " : "🥷 "}{nextEnemyPreview}
             </div>
-            {isBoss && <div className="text-xs text-red-400 mt-1">보스전 — 각오를 단단히 하라!</div>}
+            {isBoss && <div className="text-[11px] text-red-300">보스전 — 각오를 단단히 하라!</div>}
           </div>
 
-          <div className="flex flex-col gap-3 mt-6">
+          {/* 액션 버튼 — 위계 정리, 모바일 py 축소 */}
+          <div className="flex flex-col gap-2">
+            <button onClick={() => dispatch({ type: "START_BATTLE" })}
+              className={`w-full py-3 rounded-lg text-base font-bold transition-all active:scale-[0.98] ${isBoss ? "bg-red-800 hover:bg-red-700 text-red-100" : "bg-amber-800 hover:bg-amber-700 text-amber-100"}`}>
+              {isBoss ? "⚔️ 보스에게 도전하기" : "▶ 앞으로 나아가기"}
+            </button>
             <button onClick={() => dispatch({ type: "ENTER_WORLDMAP" })}
-              className="w-full py-4 bg-red-900 hover:bg-red-800 rounded-lg text-lg font-bold transition-all transform hover:scale-[1.02] active:scale-[0.98] text-red-100">
+              className="w-full py-2.5 bg-red-900 hover:bg-red-800 rounded-lg text-sm font-bold text-red-100 transition-all active:scale-[0.98]">
               🗺️ 북쪽 출도 (녹림 루트)
             </button>
-            <button onClick={() => dispatch({ type: "START_BATTLE" })}
-              className={`w-full py-4 rounded-lg text-lg font-bold transition-all transform hover:scale-[1.02] active:scale-[0.98] ${isBoss ? "bg-red-800 hover:bg-red-700 text-red-100" : "bg-amber-800 hover:bg-amber-700 text-amber-100"}`}>
-              {isBoss ? "보스에게 도전하기" : "앞으로 나아가기 (선형)"}
-            </button>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button onClick={() => dispatch({ type: "VISIT_INN" })}
-                className="flex-1 py-3 bg-emerald-800 hover:bg-emerald-700 rounded-lg text-base font-bold transition-colors">
+                className="flex-1 py-2.5 bg-emerald-800 hover:bg-emerald-700 rounded-lg text-sm font-bold">
                 🏮 취선루
               </button>
               <button onClick={() => dispatch({ type: "VISIT_TRAINING" })}
-                className="flex-1 py-3 bg-indigo-800 hover:bg-indigo-700 rounded-lg text-base font-bold transition-colors">
+                className="flex-1 py-2.5 bg-indigo-800 hover:bg-indigo-700 rounded-lg text-sm font-bold">
                 ⚔️ 연무장
               </button>
             </div>
-            <button onClick={() => dispatch({ type: "SAVE_GAME" })}
-              className="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-300 transition-colors">
-              기록 저장
-            </button>
           </div>
         </div>
 
-        <div className="bg-gray-900/60 rounded-xl border border-gray-700 p-4">
-          <h3 className="text-sm font-bold text-gray-400 mb-3">비급고 ({player.deck.length}장)</h3>
-          <div className="grid grid-cols-2 gap-2">
+        {/* 비급고 — details 로 기본 접힘 */}
+        <details className="bg-gray-900/60 rounded-xl border border-gray-700 p-3">
+          <summary className="text-[13px] font-bold text-gray-200 cursor-pointer select-none">
+            📜 비급고 ({player.deck.length}장)
+          </summary>
+          <div className="grid grid-cols-2 gap-1.5 mt-2">
             {player.deck.map((card, i) => (
-              <div key={i} className="flex items-center justify-between bg-gray-800/60 rounded px-3 py-2 text-sm">
-                <span className="text-white">{card.name}</span>
-                <span className="text-xs text-gray-500">비용 {card.cost} | {"★".repeat(card.mastery)}</span>
+              <div key={i} className="flex items-center justify-between bg-gray-800/60 rounded px-2 py-1.5 text-[12px]">
+                <span className="text-white truncate">{card.name}</span>
+                <span className="text-[11px] text-gray-400 shrink-0 ml-1">
+                  {card.cost}·{"★".repeat(card.mastery)}
+                </span>
               </div>
             ))}
           </div>
-        </div>
+        </details>
       </div>
     </div>
   );

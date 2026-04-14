@@ -167,7 +167,7 @@ export default function BattlePage() {
                   내공 <span className="text-white font-mono">{player.energy}/{player.maxEnergy}</span>
                 </span>
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 snap-x snap-mandatory">
                 {player.hand.map((card) => (
                   <div key={card.id} className="snap-start shrink-0">
                     <CardButton
@@ -181,10 +181,10 @@ export default function BattlePage() {
               </div>
             </div>
 
-            {/* 기본 행동 */}
+            {/* 기본 행동 — 한 줄 꽉 채움 */}
             <div>
               <div className="text-xs text-gray-300 mb-1 px-1">기본 행동 (비용 0)</div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="flex gap-1.5 justify-center">
                 {BASIC_ACTIONS.map((card) => (
                   <div key={card.id} className="shrink-0">
                     <CardButton

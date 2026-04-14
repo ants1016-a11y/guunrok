@@ -45,9 +45,9 @@ export default function WorldMapPage() {
         </p>
       </div>
 
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        {/* 노드맵 그리드 — 모바일 축소 노드(48px)+gap-2, sm+ 기존 크기 */}
-        <div className="relative bg-gray-900/40 rounded-xl border border-gray-800 p-3 sm:p-6 mb-6">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-3 sm:py-6">
+        {/* 노드맵 그리드 — 모바일 노드 44px + gap 4px = 284px, 320px 폭에 fit */}
+        <div className="relative bg-gray-900/40 rounded-xl border border-gray-800 p-2 sm:p-6 mb-4">
           {/* 연결선 (SVG) */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
             {mapNodes.map((node) =>
@@ -73,12 +73,12 @@ export default function WorldMapPage() {
             )}
           </svg>
 
-          {/* 노드 그리드 */}
+          {/* 노드 그리드 — 모바일은 gap-1 (4px) 로 6열이 320px 내 fit */}
           <div
-            className="relative grid gap-2 sm:gap-4"
+            className="relative grid gap-1 sm:gap-4"
             style={{
               gridTemplateColumns: `repeat(${cols}, 1fr)`,
-              gridAutoRows: "minmax(64px, auto)",
+              gridAutoRows: "minmax(56px, auto)",
             }}
           >
             {/* 빈 셀 채우기 */}
@@ -99,7 +99,7 @@ export default function WorldMapPage() {
                     disabled={!isReachable}
                     onClick={() => dispatch({ type: "VISIT_NODE", nodeId: node.id })}
                     className={`
-                      relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg border-2 flex flex-col items-center justify-center
+                      relative w-11 h-11 sm:w-16 sm:h-16 rounded-lg border-2 flex flex-col items-center justify-center
                       transition-all duration-200
                       ${colorClass}
                       ${isCurrent ? "ring-2 ring-amber-400 scale-110" : ""}
@@ -109,8 +109,8 @@ export default function WorldMapPage() {
                     `}
                     title={node.label}
                   >
-                    <span className="text-base sm:text-lg leading-none">{node.icon}</span>
-                    <span className="text-[11px] text-gray-200 leading-tight mt-0.5 max-w-[56px] truncate">{node.label}</span>
+                    <span className="text-sm sm:text-lg leading-none">{node.icon}</span>
+                    <span className="text-[10px] sm:text-[11px] text-gray-200 leading-tight mt-0.5 max-w-full truncate px-0.5">{node.label}</span>
                     {isCurrent && (
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full" />
                     )}
