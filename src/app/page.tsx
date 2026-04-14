@@ -58,12 +58,9 @@ export default function TitlePage() {
       </div>
 
       {/* 설명 — 모바일은 축약 */}
-      <div className="text-center text-sm text-gray-300 max-w-md mb-4 leading-relaxed">
+      <div className="text-center text-sm text-gray-300 max-w-md mb-3 leading-relaxed">
         {deathCount > 0 ? (
-          <>
-            <p className="italic">같은 산길이 또다시 펼쳐졌다.</p>
-            <p className="text-gray-300 mt-1">{`(${deathCount}번째 되풀이)`}</p>
-          </>
+          <p className="italic text-gray-200">같은 산길이 또다시 펼쳐졌다.</p>
         ) : (
           <>
             <p className="hidden sm:block">나는 천재가 아니다. 하지만 포기하지 않는 법은 배웠다.</p>
@@ -71,6 +68,41 @@ export default function TitlePage() {
           </>
         )}
       </div>
+
+      {/* 회귀 배지 */}
+      {deathCount > 0 && (() => {
+        const tiers = [
+          { n: 100, emoji: "💎", label: "Diamond", color: "text-cyan-300" },
+          { n: 50,  emoji: "👑", label: "Platinum", color: "text-purple-300" },
+          { n: 20,  emoji: "🥉", label: "Gold",     color: "text-yellow-300" },
+          { n: 10,  emoji: "🥈", label: "Silver",   color: "text-gray-100" },
+          { n: 5,   emoji: "🥇", label: "Bronze",   color: "text-amber-400" },
+        ];
+        const current = tiers.find((t) => deathCount >= t.n);
+        const next = [...tiers].reverse().find((t) => deathCount < t.n);
+        return (
+          <div className="w-full max-w-sm mb-4 rounded-xl border border-amber-800/40 bg-amber-950/20 px-4 py-3 text-center">
+            <div className="text-[11px] uppercase tracking-wider text-amber-400/80">회귀 횟수</div>
+            <div className="mt-0.5 flex items-baseline justify-center gap-2">
+              <span className="text-4xl sm:text-5xl font-extrabold text-amber-300 tabular-nums leading-none">
+                {deathCount}
+              </span>
+              <span className="text-sm text-gray-200">회</span>
+            </div>
+            {current && (
+              <div className={`mt-2 inline-flex items-center gap-1 rounded-full bg-gray-900/60 border border-gray-700 px-3 py-1 text-[12px] ${current.color}`}>
+                <span className="text-base leading-none">{current.emoji}</span>
+                <span className="font-bold">{current.label} 달성</span>
+              </div>
+            )}
+            {next && (
+              <div className="mt-1.5 text-[11px] text-gray-300">
+                다음 배지 <span className="text-amber-300">{next.emoji} {next.label}</span> 까지 {next.n - deathCount}회
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="w-full max-w-sm mb-3">
         <label className="block text-center text-amber-300 text-[13px] mb-1.5">무와 협을 좋아하는 당신은?</label>
