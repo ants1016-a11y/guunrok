@@ -69,11 +69,38 @@ export default function TitlePage() {
         )}
       </div>
 
-      {deathCount > 0 && (
-        <div className="mb-4 text-center text-[13px] text-gray-300">
-          {deathCount}번째 되풀이
-        </div>
-      )}
+      {/* 회귀 경지 — martial_arts.md 의 9경지 이름 차용 (라벨만, 추후 조정 예정) */}
+      {deathCount > 0 && (() => {
+        const realms = [
+          { n: 100, name: "자연경", hanja: "自然境", color: "text-cyan-200" },
+          { n: 50,  name: "생사경", hanja: "生死境", color: "text-purple-300" },
+          { n: 30,  name: "현경",   hanja: "玄境",   color: "text-violet-300" },
+          { n: 20,  name: "화경",   hanja: "化境",   color: "text-rose-300" },
+          { n: 12,  name: "초절정", hanja: "超絶頂", color: "text-red-300" },
+          { n: 7,   name: "절정",   hanja: "絶頂",   color: "text-orange-300" },
+          { n: 4,   name: "일류",   hanja: "一流",   color: "text-yellow-300" },
+          { n: 2,   name: "이류",   hanja: "二流",   color: "text-emerald-300" },
+          { n: 1,   name: "삼류",   hanja: "三流",   color: "text-gray-200" },
+        ];
+        const current = realms.find((r) => deathCount >= r.n);
+        const next = [...realms].reverse().find((r) => deathCount < r.n);
+        return (
+          <div className="w-full max-w-sm mb-4 rounded-xl border border-amber-800/40 bg-amber-950/20 px-4 py-3 text-center">
+            <div className="text-[11px] uppercase tracking-wider text-amber-400/80">회귀 {deathCount}회</div>
+            {current && (
+              <div className={`mt-1 flex items-baseline justify-center gap-2 ${current.color}`}>
+                <span className="text-3xl sm:text-4xl font-extrabold leading-none">{current.name}</span>
+                <span className="text-[12px] opacity-70">{current.hanja}</span>
+              </div>
+            )}
+            {next && (
+              <div className="mt-1.5 text-[11px] text-gray-300">
+                다음 경지 <span className="text-amber-300">{next.name}</span> 까지 {next.n - deathCount}회
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="w-full max-w-sm mb-3">
         <label className="block text-center text-amber-300 text-[13px] mb-1.5">무와 협을 좋아하는 당신은?</label>
